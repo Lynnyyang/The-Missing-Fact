@@ -104,37 +104,42 @@ function RctLesson() {
   const balanced = Math.abs(covar.能力.diff) < 2 && Math.abs(covar.收入.diff) < 1.2 && Math.abs(covar.入学前成绩.diff) < 1.8;
 
   // 连抽多次：每次记录一次「入学前成绩差」
-  const runDraws = (n: number) => {
+  const runDraws = (n: number, how: Mode = drawMode) => {
+    const b = how === "抽签" ? 0 : 1;
     const out: number[] = [];
     for (let k = 1; k <= n; k += 1) {
       const rand = rng(90000 + (seed + k) * 6151);
       const withRank = students.map((s) => ({
         s,
-        r: bias * (s.eliteRank / students.length) + (1 - bias) * rand(),
+        r: b * (s.eliteRank / students.length) + (1 - b) * rand(),
       }));
-      withRank.sort((a, b) => a.r - b.r);
+      withRank.sort((a, b2) => a.r - b2.r);
       const set = new Set(withRank.slice(0, seats).map((x) => x.s.id));
       const t = students.filter((s) => set.has(s.id)).map((s) => s.pre);
       const c = students.filter((s) => !set.has(s.id)).map((s) => s.pre);
       out.push(mean(t) - mean(c));
     }
     setDraws(out);
-    track("随机抽签", "连抽多次", `${n} 次，抽签前成绩差平均 ${fmt(mean(out))}`);
+    track("随机抽签", "连抽多次", `${how === "抽签" ? "随机抽签" : "按成绩录取"} ${n} 次，抽签前成绩差平均 ${fmt(mean(out))}`);
   };
 
   const drawHist = useMemo(() => {
     if (!draws.length) return [] as { name: string; v: number }[];
-    const lo = Math.min(-6, Math.floor(Math.min(...draws)));
-    const hi = Math.max(6, Math.ceil(Math.max(...draws)));
-    const bins = 12;
+    const dmin = Math.min(...draws);
+    const dmax = Math.max(...draws);
+    const span = Math.max(dmax - dmin, 1.2);
+    const lo = Math.min(dmin, -0.6) - span * 0.1;
+    const hi = Math.max(dmax, 0.6) + span * 0.1;
+    const bins = 13;
     const w = (hi - lo) / bins;
     const counts = new Array(bins).fill(0) as number[];
     draws.forEach((d) => {
       const i = Math.min(bins - 1, Math.max(0, Math.floor((d - lo) / w)));
       counts[i] = (counts[i] ?? 0) + 1;
     });
-    return counts.map((c, i) => ({ name: fmt(lo + w * i, 1), v: c }));
+    return counts.map((c, i) => ({ name: fmt(lo + w * (i + 0.5), 1), v: c }));
   }, [draws]);
+
 
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
