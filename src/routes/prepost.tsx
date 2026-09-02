@@ -101,6 +101,8 @@ function PrePostLesson() {
     );
   if (step === 2 && counterfactual === "水平" && Math.abs(line.b) > 4)
     hints.push("事前本来就在往上走，只用水平延续会把这条慢趋势算成政策。试试趋势外推。");
+  if (step === 2 && trimmed)
+    hints.push(`为了不跨过真正的免票月 ${data[POLICY_MONTH]?.label}，前后各只用了 ${effWindow} 个月。`);
   if (step === 3 && counterfactual === "水平") hints.push("换成趋势外推再看一遍这个数字，差别就是趋势的份。");
   if (step === 4 && (shocks.typhoon || shocks.viral || shocks.fire))
     hints.push("现在窗口里有别的大事，「期间没有别的干扰」这条前提已经不成立了。");
@@ -115,6 +117,7 @@ function PrePostLesson() {
       是否为假的开始月份: fake ? "是" : "否",
       对照线类型: counterfactual === "水平" ? "水平延续" : "趋势外推",
       "窗口长度（月）": window_,
+      "实际使用的窗口（月）": effWindow,
       事前均值: fmt(preMean, 0),
       事后均值: fmt(postMean, 0),
       "估计效应（人次/月）": fmt(estimate, 0),
@@ -270,7 +273,15 @@ function PrePostLesson() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <Tile label="估计效应" value={estimate} unit="人次/月" tone={fake ? "rose" : "copper"} />
                 <Tile label="事前每月趋势" value={line.b} unit="人次" />
+                <Tile label="实际使用的窗口" value={effWindow} unit="月" />
               </div>
+              {trimmed && (
+                <div className="mt-3">
+                  <Callout>
+                    为了让前后两段都不跨过真正的免票月 {data[POLICY_MONTH]?.label}，前后各只取了 {effWindow} 个月。
+                  </Callout>
+                </div>
+              )}
               {fake && (
                 <div className="mt-3">
                   <Callout tone="rose">这是假的开始月份，估计还这么大就说明你的对照线在替趋势或干扰记账。</Callout>
