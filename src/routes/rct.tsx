@@ -63,7 +63,9 @@ function RctLesson() {
   const [checks, setChecks] = useState<string[]>([]);
   const [draws, setDraws] = useState<number[]>([]);
   const [drawMode, setDrawMode] = useState<Mode>("抽签");
+  const [drawBatch, setDrawBatch] = useState(0);
   const [showN, setShowN] = useState(14);
+
 
 
   const students = useMemo(() => makeStudents(), []);
@@ -106,12 +108,15 @@ function RctLesson() {
   const est = diffMeans(T.map((r) => r.y), C.map((r) => r.y));
   const balanced = Math.abs(covar.能力.diff) < 2 && Math.abs(covar.收入.diff) < 1.2 && Math.abs(covar.入学前成绩.diff) < 1.8;
 
-  // 连抽多次：每次记录一次「入学前成绩差」
+  // 连抽多次：每次记录一次「入学前成绩差」。
+  // 用 drawBatch 保证连续点击「连抽」也得到全新的随机序列。
   const runDraws = (n: number, how: Mode = drawMode) => {
     const b = how === "抽签" ? 0 : 1;
+    const batch = drawBatch + 1;
+    setDrawBatch(batch);
     const out: number[] = [];
     for (let k = 1; k <= n; k += 1) {
-      const rand = rng(90000 + (seed + k) * 6151);
+      const rand = rng(90000 + seed * 6151 + batch * 10007 + k * 7919);
       const withRank = students.map((s) => ({
         s,
         r: b * (s.eliteRank / students.length) + (1 - b) * rand(),
@@ -125,6 +130,7 @@ function RctLesson() {
     setDraws(out);
     track("随机抽签", "连抽多次", `${how === "抽签" ? "随机抽签" : "按成绩录取"} ${n} 次，抽签前成绩差平均 ${fmt(mean(out))}`);
   };
+
 
   const drawHist = useMemo(() => {
     if (!draws.length) return [] as { name: string; v: number }[];
