@@ -63,7 +63,9 @@ function RctLesson() {
   const [checks, setChecks] = useState<string[]>([]);
   const [draws, setDraws] = useState<number[]>([]);
   const [drawMode, setDrawMode] = useState<Mode>("抽签");
+  const [drawBatch, setDrawBatch] = useState(0);
   const [showN, setShowN] = useState(14);
+
 
 
   const students = useMemo(() => makeStudents(), []);
