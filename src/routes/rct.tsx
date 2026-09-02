@@ -62,6 +62,9 @@ function RctLesson() {
   const [questions, setQuestions] = useState<string[]>([]);
   const [checks, setChecks] = useState<string[]>([]);
   const [draws, setDraws] = useState<number[]>([]);
+  const [drawMode, setDrawMode] = useState<Mode>("抽签");
+  const [showN, setShowN] = useState(14);
+
 
   const students = useMemo(() => makeStudents(), []);
   const mode: Mode = bias < 0.15 ? "抽签" : "按成绩";
@@ -104,37 +107,42 @@ function RctLesson() {
   const balanced = Math.abs(covar.能力.diff) < 2 && Math.abs(covar.收入.diff) < 1.2 && Math.abs(covar.入学前成绩.diff) < 1.8;
 
   // 连抽多次：每次记录一次「入学前成绩差」
-  const runDraws = (n: number) => {
+  const runDraws = (n: number, how: Mode = drawMode) => {
+    const b = how === "抽签" ? 0 : 1;
     const out: number[] = [];
     for (let k = 1; k <= n; k += 1) {
       const rand = rng(90000 + (seed + k) * 6151);
       const withRank = students.map((s) => ({
         s,
-        r: bias * (s.eliteRank / students.length) + (1 - bias) * rand(),
+        r: b * (s.eliteRank / students.length) + (1 - b) * rand(),
       }));
-      withRank.sort((a, b) => a.r - b.r);
+      withRank.sort((a, b2) => a.r - b2.r);
       const set = new Set(withRank.slice(0, seats).map((x) => x.s.id));
       const t = students.filter((s) => set.has(s.id)).map((s) => s.pre);
       const c = students.filter((s) => !set.has(s.id)).map((s) => s.pre);
       out.push(mean(t) - mean(c));
     }
     setDraws(out);
-    track("随机抽签", "连抽多次", `${n} 次，抽签前成绩差平均 ${fmt(mean(out))}`);
+    track("随机抽签", "连抽多次", `${how === "抽签" ? "随机抽签" : "按成绩录取"} ${n} 次，抽签前成绩差平均 ${fmt(mean(out))}`);
   };
 
   const drawHist = useMemo(() => {
     if (!draws.length) return [] as { name: string; v: number }[];
-    const lo = Math.min(-6, Math.floor(Math.min(...draws)));
-    const hi = Math.max(6, Math.ceil(Math.max(...draws)));
-    const bins = 12;
+    const dmin = Math.min(...draws);
+    const dmax = Math.max(...draws);
+    const span = Math.max(dmax - dmin, 1.2);
+    const lo = Math.min(dmin, -0.6) - span * 0.1;
+    const hi = Math.max(dmax, 0.6) + span * 0.1;
+    const bins = 13;
     const w = (hi - lo) / bins;
     const counts = new Array(bins).fill(0) as number[];
     draws.forEach((d) => {
       const i = Math.min(bins - 1, Math.max(0, Math.floor((d - lo) / w)));
       counts[i] = (counts[i] ?? 0) + 1;
     });
-    return counts.map((c, i) => ({ name: fmt(lo + w * i, 1), v: c }));
+    return counts.map((c, i) => ({ name: fmt(lo + w * (i + 0.5), 1), v: c }));
   }, [draws]);
+
 
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
@@ -147,7 +155,9 @@ function RctLesson() {
   if (step === 1 && bias > 0.15 && bias < 0.85) hints.push(`招生偏向拖到 ${Math.round(bias * 100)}%，是半随机半按成绩，偏差也只消掉一半。`);
   if (step === 2 && !balanced) hints.push("三个差里有明显偏的，按「再抽一次」换个签，或看看你手动换组换掉了谁。");
   if (step === 2 && balanced) hints.push("三个差都不大，说明抽签没有系统性把某一类人抽进班；这不代表期末差就是政策效果的证明，但对照可用。");
+  if (step === 2 && draws.length && drawMode === "按成绩") hints.push("现在连抽用的是按成绩录取，每次的差都落在同一边；切到随机抽签再抽一遍，比一比两个分布的位置。");
   if (step === 2 && draws.length) hints.push(`你连抽了 ${draws.length} 次，抽签前成绩差平均 ${fmt(mean(draws))} 分：单次会偏，多次围着 0 转才是随机抽签的意思。`);
+  if (step === 3 && show === "两格") hints.push("你正在偷看两格：现实里同一个人只能看到一格，看完记得回到「只看观测到的」想想对照组替谁说话。");
   if (step === 3 && spill > 0) hints.push("溢出打开后对照组也沾到好处，两组之差会被压小，估计偏低。");
   if (step === 4 && noncompliance) hints.push(`有 ${Math.round(noncompRate * 100)}% 抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。`);
   if (step === 4 && attrition) hints.push(`缺考比例 ${Math.round(attritionRate * 100)}%，只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。`);
@@ -161,7 +171,11 @@ function RctLesson() {
       "招生偏向（按成绩的比重）": `${Math.round(bias * 100)}%`,
       实验班名额: seats,
       抽签第几次: seed,
+      连抽用哪种办法: drawMode === "抽签" ? "随机抽签" : "按成绩录取",
       连抽次数: draws.length ? `${draws.length} 次，平均抽签前成绩差 ${fmt(mean(draws))}` : "还没连抽",
+      潜在结果画几个人: `${showN} 人`,
+      两格显示: show === "两格" ? "偷看两格" : "只看观测到的",
+      偷看的人数: opened.length,
       溢出强度: `${Math.round(spill * 100)}%`,
       不依从: noncompliance ? `开，比例 ${Math.round(noncompRate * 100)}%` : "关",
       缺考: attrition ? `开，比例 ${Math.round(attritionRate * 100)}%` : "关",
@@ -341,8 +355,24 @@ function RctLesson() {
             </div>
           </Panel>
 
-          <Panel title="连着抽很多次" hint="一次抽签会偏，很多次抽签的差围着 0 转，这才是随机抽签的承诺。">
+          <Panel title="连着抽很多次" hint="先选这很多次用哪种办法分人，再连抽，看每次的「抽签前成绩差」散成什么形状。">
             <div className="flex flex-wrap items-center gap-2">
+              {(["抽签", "按成绩"] as const).map((m) => (
+                <Chip
+                  key={m}
+                  active={drawMode === m}
+                  tone={m === "抽签" ? "teal" : "rose"}
+                  onClick={() => {
+                    setDrawMode(m);
+                    track("随机抽签", "连抽用哪种办法", m === "抽签" ? "随机抽签" : "按成绩录取");
+                    if (draws.length) runDraws(draws.length, m);
+                  }}
+                >
+                  {m === "抽签" ? "随机抽签" : "按成绩录取"}
+                </Chip>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               {[20, 100].map((n) => (
                 <button
                   key={n}
@@ -383,32 +413,40 @@ function RctLesson() {
                   <ResponsiveContainer>
                     <BarChart data={drawHist}>
                       <CartesianGrid stroke="var(--border)" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                      <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                        label={{ value: "抽签前成绩差（分）", position: "insideBottom", offset: -2, fontSize: 10, fill: "var(--muted-foreground)" }}
+                      />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
                       <Tooltip
                         contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }}
+                        formatter={(v: number) => [`${v} 次`, "落在这一格"]}
                       />
-                      <Bar dataKey="v" radius={3} fill="var(--teal)" />
+                      <Bar dataKey="v" radius={3} fill={drawMode === "抽签" ? "var(--teal)" : "var(--rose)"} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <Callout tone={Math.abs(mean(draws)) < 0.6 ? "copper" : "rose"}>
-                  {Math.abs(mean(draws)) < 0.6
-                    ? "很多次抽签的抽签前成绩差平均下来贴着 0：单次抽签可以运气不好，但没有系统偏向。"
-                    : "平均还明显偏离 0，说明现在的招生偏向不是纯随机，先把上一页的偏向拖到 0。"}
+                <Callout tone={drawMode === "抽签" && Math.abs(mean(draws)) < 0.6 ? "copper" : "rose"}>
+                  {drawMode === "抽签"
+                    ? Math.abs(mean(draws)) < 0.6
+                      ? "随机抽签这很多次的差平均下来贴着 0，形状左右对称：单次可以运气不好，但没有系统偏向。"
+                      : "平均还偏离 0，再多抽几次看看它会不会收回来。"
+                    : "按成绩录取时，每一次的差都稳稳落在同一边、离 0 很远：这不是运气，是办法本身造出来的偏差。"}
                 </Callout>
               </>
             ) : (
               <p className="mt-3 text-xs text-muted-foreground">按一次上面的按钮，就会把每次抽签的「抽签前成绩差」画成分布。</p>
             )}
           </Panel>
+
         </>
       )}
 
       {step === 3 && (
         <>
-          <Panel title="同一个人只有一格能被看见">
-            <div className="flex flex-wrap gap-2">
+          <Panel title="同一个人只有一格能被看见" hint="每一行是一个人：铜点是「进班」的分，青点是「不进班」的分。看不见的那一格画成空心问号，点一下这行可以偷看。">
+            <div className="flex flex-wrap items-center gap-2">
               {(["观测", "两格"] as const).map((m) => (
                 <Chip
                   key={m}
@@ -421,10 +459,45 @@ function RctLesson() {
                   {m === "观测" ? "只看观测到的" : "偷看两格（现实里做不到）"}
                 </Chip>
               ))}
+              {opened.length > 0 && (
+                <Chip
+                  tone="teal"
+                  onClick={() => {
+                    setOpened([]);
+                    track("潜在结果", "收起偷看的格子", `${opened.length} 人`);
+                  }}
+                >
+                  收起偷看的 {opened.length} 人
+                </Chip>
+              )}
             </div>
-            <div className="mt-4 grid gap-1.5 sm:grid-cols-2">
-              {rows.slice(0, 12).map((r) => {
+
+            <div className="mt-3">
+              <Dial
+                label="画几个人"
+                value={showN}
+                min={6}
+                max={40}
+                unit=" 人"
+                onChange={(v) => {
+                  setShowN(v);
+                  track("潜在结果", "画几个人", `${v} 人`);
+                }}
+                hint="人越多，越能看出两组的分布是怎么叠在一起的。"
+              />
+            </div>
+
+            <div className="mt-4 flex items-center justify-between px-1 text-[11px] text-muted-foreground">
+              <span className="num">40 分</span>
+              <span>期末科学测验</span>
+              <span className="num">100 分</span>
+            </div>
+            <div className="mt-1 space-y-1">
+              {rows.slice(0, showN).map((r) => {
                 const open = opened.includes(r.s.id) || show === "两格";
+                const pos = (v: number) => `${Math.min(98, Math.max(0, ((v - 40) / 60) * 100))}%`;
+                const seen = r.treated ? r.s.y1 : r.s.y0;
+                const hidden = r.treated ? r.s.y0 : r.s.y1;
                 return (
                   <button
                     key={r.s.id}
@@ -433,25 +506,65 @@ function RctLesson() {
                       setOpened((p) => (p.includes(r.s.id) ? p.filter((x) => x !== r.s.id) : [...p, r.s.id]));
                       track("潜在结果", "点开格子", r.s.name);
                     }}
-                    className="panel flex items-center justify-between px-3 py-2 text-xs hover:border-copper"
+                    className="group flex w-full items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-secondary/60"
                   >
-                    <span>
-                      {r.s.name}
-                      <span className={r.treated ? "ml-2 text-copper" : "ml-2 text-muted-foreground"}>
-                        {r.treated ? "实验班" : "对照"}
+                    <span className="w-16 shrink-0 truncate text-[11px] text-muted-foreground">{r.s.name}</span>
+                    <span className={"w-10 shrink-0 text-[10px] " + (r.treated ? "text-copper" : "text-teal")}>
+                      {r.treated ? "实验班" : "对照"}
+                    </span>
+                    <span className="relative h-5 min-w-0 flex-1 rounded-full bg-secondary/50">
+                      {open && (
+                        <span
+                          className="absolute top-1/2 h-px bg-border"
+                          style={{
+                            left: pos(Math.min(seen, hidden)),
+                            width: `${(Math.abs(r.s.y1 - r.s.y0) / 60) * 100}%`,
+                          }}
+                        />
+                      )}
+                      <span
+                        title={`观测到：${fmt(seen, 1)} 分`}
+                        className={
+                          "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full " +
+                          (r.treated ? "bg-copper" : "bg-teal")
+                        }
+                        style={{ left: pos(seen) }}
+                      />
+                      <span
+                        className={
+                          "absolute top-1/2 flex h-3 w-3 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-dashed text-[8px] " +
+                          (r.treated ? "border-teal text-teal" : "border-copper text-copper") +
+                          (open ? " opacity-90" : " opacity-40")
+                        }
+                        style={{ left: open ? pos(hidden) : "100%" }}
+                      >
+                        {open ? "" : "？"}
                       </span>
                     </span>
-                    <span className="num flex gap-3">
-                      <span className={r.treated ? "text-copper" : open ? "text-muted-foreground" : "opacity-30"}>
-                        进班 {r.treated || open ? fmt(r.s.y1, 1) : "？"}
-                      </span>
-                      <span className={!r.treated ? "text-teal" : open ? "text-muted-foreground" : "opacity-30"}>
-                        不进班 {!r.treated || open ? fmt(r.s.y0, 1) : "？"}
+                    <span className="num w-24 shrink-0 text-right text-[11px]">
+                      <span className={r.treated ? "text-copper" : "text-teal"}>{fmt(seen, 1)}</span>
+                      <span className="mx-1 text-muted-foreground">/</span>
+                      <span className={open ? "text-muted-foreground" : "opacity-40"}>
+                        {open ? fmt(hidden, 1) : "？"}
                       </span>
                     </span>
                   </button>
                 );
               })}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Tile label="实验班观测均值" value={mean(T.map((r) => r.y))} tone="copper" />
+              <Tile label="对照观测均值" value={mean(C.map((r) => r.y))} tone="teal" />
+              <Tile
+                label={show === "两格" ? "偷看：每个人自己的差的平均" : "偷看后才显示"}
+                value={
+                  show === "两格"
+                    ? fmt(mean(rows.slice(0, showN).map((r) => r.s.y1 - r.s.y0)))
+                    : "先切到两格"
+                }
+                tone="rose"
+              />
             </div>
             <div className="mt-3">
               <Callout>
@@ -459,6 +572,7 @@ function RctLesson() {
               </Callout>
             </div>
           </Panel>
+
           <Panel title="溢出：对照组也沾到好处" hint="拖大它，看两组之差怎么被压小。">
             <Dial
               label="溢出强度"
