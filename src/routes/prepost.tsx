@@ -82,7 +82,7 @@ function PrePostLesson() {
   }));
 
   useEffect(() => {
-    visit(STEPS[step].id, 12);
+    visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
 
   const hints: string[] = [];
@@ -99,7 +99,7 @@ function PrePostLesson() {
 
   useCompanionSnapshot({
     lesson: "碣石渡免票（事前事后）",
-    page: STEPS[step].title,
+    page: STEPS[step]?.title ?? "",
     facts: {
       免票开始月份: data[POLICY_MONTH]?.label ?? "2018-07",
       当前设定的开始月份: data[startMonth]?.label ?? "",
@@ -207,7 +207,7 @@ function PrePostLesson() {
                     formatter={(v: number) => fmt(v, 0)}
                   />
                   <ReferenceLine
-                    x={chart[startMonth]?.label}
+                    x={chart[startMonth]?.label ?? ""}
                     stroke={fake ? "var(--rose)" : "var(--copper)"}
                     label={{ value: fake ? "假的开始" : "免票开始", fill: "var(--muted-foreground)", fontSize: 10 }}
                   />

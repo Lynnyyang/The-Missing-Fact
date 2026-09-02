@@ -95,7 +95,7 @@ function RctLesson() {
   const balanced = Math.abs(covar.能力.diff) < 2 && Math.abs(covar.收入.diff) < 1.2 && Math.abs(covar.入学前成绩.diff) < 1.8;
 
   useEffect(() => {
-    visit(STEPS[step].id, 12);
+    visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
 
   const hints: string[] = [];
@@ -113,7 +113,7 @@ function RctLesson() {
 
   useCompanionSnapshot({
     lesson: "青藤抽签（随机分组）",
-    page: STEPS[step].title,
+    page: STEPS[step]?.title ?? "",
     facts: {
       录取办法: mode === "抽签" ? "公开抽签" : "按入学前成绩录取",
       实验班名额: seats,

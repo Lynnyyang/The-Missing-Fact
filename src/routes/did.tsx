@@ -57,7 +57,7 @@ function DidLesson() {
   const controls = blocks.filter((b) => !b.treated);
   const chosen = controls.filter((b) => picked.includes(b.key));
 
-  const avg = (bs: typeof blocks, y: number) => mean(bs.map((b) => b.prices[y]));
+  const avg = (bs: typeof blocks, y: number) => mean(bs.map((b) => b.prices[y] ?? 0));
   const t0 = avg(treated, PRE);
   const t1 = avg(treated, postYear);
   const c0 = chosen.length ? avg(chosen, PRE) : 0;
@@ -89,7 +89,7 @@ function DidLesson() {
   );
 
   useEffect(() => {
-    visit(STEPS[step].id, 12);
+    visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
 
   const hints: string[] = [];
@@ -105,7 +105,7 @@ function DidLesson() {
 
   useCompanionSnapshot({
     lesson: "银线通车（双重差分与匹配）",
-    page: STEPS[step].title,
+    page: STEPS[step]?.title ?? "",
     facts: {
       通车年份: OPEN_YEAR,
       选中的对照街区: chosen.map((b) => b.name).join("、") || "还没选",
@@ -152,7 +152,7 @@ function DidLesson() {
                 >
                   <div className="flex justify-between">
                     <span className={b.treated ? "text-copper" : ""}>{b.name}</span>
-                    <span className="num text-muted-foreground">{fmt(b.prices[PRE])}</span>
+                    <span className="num text-muted-foreground">{fmt(b.prices[PRE] ?? 0)}</span>
                   </div>
                   <div className="num mt-1 text-[11px] text-muted-foreground">
                     密度 {b.density} · 距中心 {fmt(b.distance, 1)} km
@@ -173,7 +173,7 @@ function DidLesson() {
               const gap =
                 Math.abs(b.density - mean(treated.map((t) => t.density))) / 100 +
                 Math.abs(b.distance - mean(treated.map((t) => t.distance))) +
-                Math.abs(b.prices[PRE] - t0) * 2;
+                Math.abs((b.prices[PRE] ?? 0) - t0) * 2;
               return (
                 <button
                   key={b.key}
@@ -191,7 +191,7 @@ function DidLesson() {
                     <span className="num text-muted-foreground">匹配差距 {fmt(gap, 2)}</span>
                   </div>
                   <div className="num mt-1 text-[11px] text-muted-foreground">
-                    密度 {b.density} · {fmt(b.distance, 1)} km · 通车前 {fmt(b.prices[PRE])}
+                    密度 {b.density} · {fmt(b.distance, 1)} km · 通车前 {fmt(b.prices[PRE] ?? 0)}
                   </div>
                   {on && b.note && <div className="mt-1 text-[11px] text-rose">{b.note}</div>}
                 </button>

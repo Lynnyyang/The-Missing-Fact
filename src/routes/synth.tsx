@@ -59,12 +59,12 @@ function SynthLesson() {
   const norm = useMemo(() => {
     const raw = donors.map((d) => Math.max(0, weights[d.key] ?? 1 / Math.max(donors.length, 1)));
     const s = raw.reduce((a, b) => a + b, 0);
-    return donors.map((d, i) => ({ city: d, w: s > 0 ? raw[i] / s : 0 }));
+    return donors.map((d, i) => ({ city: d, w: s > 0 ? (raw[i] ?? 0) / s : 0 }));
   }, [donors, weights]);
 
-  const path = SC_YEARS.map((_, t) => norm.reduce((s, n) => s + n.w * n.city.pm[t], 0));
+  const path = SC_YEARS.map((_, t) => norm.reduce((s, n) => s + n.w * (n.city.pm[t] ?? 0), 0));
   const preFit = rmse(path.slice(0, PRE_LEN), target.pm.slice(0, PRE_LEN));
-  const gapNow = target.pm[SC_YEARS.length - 1] - path[SC_YEARS.length - 1];
+  const gapNow = (target.pm[SC_YEARS.length - 1] ?? 0) - (path[SC_YEARS.length - 1] ?? 0);
 
   const placeboCity = placebo ? donorsAll.find((c) => c.key === placebo) : null;
   const placeboFit = useMemo(() => {
@@ -75,19 +75,19 @@ function SynthLesson() {
       others.map((d) => d.pm.slice(0, PRE_LEN)),
       1200,
     );
-    const p = SC_YEARS.map((_, t) => others.reduce((s, d, j) => s + fit.weights[j] * d.pm[t], 0));
-    return { gap: placeboCity.pm[SC_YEARS.length - 1] - p[SC_YEARS.length - 1], path: p };
+    const p = SC_YEARS.map((_, t) => others.reduce((s, d, j) => s + (fit.weights[j] ?? 0) * (d.pm[t] ?? 0), 0));
+    return { gap: (placeboCity.pm[SC_YEARS.length - 1] ?? 0) - (p[SC_YEARS.length - 1] ?? 0), path: p };
   }, [placeboCity, donorsAll, on]);
 
   const chart = SC_YEARS.map((y, t) => ({
     year: String(y),
-    岚城: target.pm[t],
-    合成岚城: Math.round(path[t] * 10) / 10,
-    ...(placeboFit ? { [`安慰剂 ${placeboCity!.name}`]: Math.round(placeboFit.path[t] * 10) / 10 } : {}),
+    岚城: target.pm[t] ?? 0,
+    合成岚城: Math.round((path[t] ?? 0) * 10) / 10,
+    ...(placeboFit ? { [`安慰剂 ${placeboCity!.name}`]: Math.round((placeboFit.path[t] ?? 0) * 10) / 10 } : {}),
   }));
 
   useEffect(() => {
-    visit(STEPS[step].id, 12);
+    visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
 
   function autoFit() {
@@ -98,7 +98,7 @@ function SynthLesson() {
     );
     const next: Record<string, number> = {};
     donors.forEach((d, i) => {
-      next[d.key] = Math.round(fit.weights[i] * 1000) / 1000;
+      next[d.key] = Math.round((fit.weights[i] ?? 0) * 1000) / 1000;
     });
     setWeights(next);
     track("分配权重", "自动拟合", `改气前误差降到 ${fmt(fit.rmse, 2)}`);
@@ -117,7 +117,7 @@ function SynthLesson() {
 
   useCompanionSnapshot({
     lesson: "岚城煤改气（合成控制）",
-    page: STEPS[step].title,
+    page: STEPS[step]?.title ?? "",
     facts: {
       政策年份: SC_TREAT_YEAR,
       供体城市: donors.map((d) => d.name).join("、") || "没有",
@@ -175,7 +175,7 @@ function SynthLesson() {
                 >
                   <div className="flex justify-between">
                     <span>{c.name}</span>
-                    <span className="num text-muted-foreground">改气前 PM2.5 {fmt(c.pm[PRE_LEN - 1], 1)}</span>
+                    <span className="num text-muted-foreground">改气前 PM2.5 {fmt(c.pm[PRE_LEN - 1] ?? 0, 1)}</span>
                   </div>
                   {c.note && <div className="mt-1 text-[11px] text-rose">{c.note}</div>}
                 </button>
