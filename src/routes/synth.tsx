@@ -97,7 +97,9 @@ function SynthLesson() {
       4000,
     );
     const next: Record<string, number> = {};
-    donors.forEach((d, i) => (next[d.key] = Math.round(fit.weights[i] * 1000) / 1000);
+    donors.forEach((d, i) => {
+      next[d.key] = Math.round(fit.weights[i] * 1000) / 1000;
+    });
     setWeights(next);
     track("分配权重", "自动拟合", `改气前误差降到 ${fmt(fit.rmse, 2)}`);
   }
