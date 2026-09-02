@@ -74,7 +74,8 @@ function PrePostLesson() {
 
   const line = fitLine(pre.map((d) => d.t), pre.map((d) => d.visits));
   const trendPred = mean(post.map((d) => line.a + line.b * d.t));
-  const estimate = counterfactual === "水平" ? postMean - preMean : postMean - trendPred;
+  const postCounterfactualMean = counterfactual === "水平" ? preMean : trendPred;
+  const estimate = postMean - postCounterfactualMean;
   const fake = startMonth !== POLICY_MONTH;
 
   const chart = data.map((d) => ({
@@ -87,6 +88,8 @@ function PrePostLesson() {
           ? preMean
           : line.a + line.b * d.t
         : null,
+    事后实际均值: d.t >= startMonth && d.t < startMonth + effWindow ? postMean : null,
+    事后对照均值: d.t >= startMonth && d.t < startMonth + effWindow ? postCounterfactualMean : null,
   }));
 
 
@@ -203,7 +206,7 @@ function PrePostLesson() {
         <>
           <Panel
             title="月度到访人次与你画出的对照线"
-            hint="铜色是实际客流，浅色是「若无免票」的对照线。"
+            hint="铜色是实际客流，浅色是「若无免票」的对照线；开始月份右侧两条短横线的距离就是估计效应。"
           >
             <div className="h-72">
               <ResponsiveContainer>
@@ -225,6 +228,22 @@ function PrePostLesson() {
                   />
                   <Line type="monotone" dataKey="客流" stroke="var(--copper)" dot={false} strokeWidth={2} />
                   <Line type="monotone" dataKey="对照线" stroke="var(--teal)" dot={false} strokeDasharray="5 4" connectNulls />
+                  <Line
+                    type="linear"
+                    dataKey="事后实际均值"
+                    stroke="var(--copper)"
+                    dot={false}
+                    strokeWidth={3}
+                    connectNulls
+                  />
+                  <Line
+                    type="linear"
+                    dataKey="事后对照均值"
+                    stroke="var(--teal)"
+                    dot={false}
+                    strokeWidth={3}
+                    connectNulls
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
