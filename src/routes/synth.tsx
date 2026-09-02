@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
 import { Callout, Chip, Dial, GuessBox, NoteBox, Panel, Quiz, Tile } from "@/components/kit";
+import { AutoReview } from "@/components/AutoReview";
 import { SC_TREAT_YEAR, SC_YEARS, makeCities } from "@/lib/synth";
 import { fitSynth, fmt, rmse } from "@/lib/stats";
 import { useApp, useCompanionSnapshot } from "@/state/app";
@@ -306,6 +307,7 @@ function SynthLesson() {
 
       {step === 5 && (
         <>
+          <AutoReview />
           <Quiz
             question="合成控制的缺口能怎么读？"
             options={[
