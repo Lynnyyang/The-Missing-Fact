@@ -329,9 +329,6 @@ function DidLesson() {
             answer={0}
             onAnswer={(ok) => track("小结", "选择题", ok ? "答对" : "答错")}
           />
-          <Panel title="写下你的结论">
-            <NoteBox value={profile.notes["did"] ?? ""} onChange={(v) => setNote("did", v)} />
-          </Panel>
           <Callout>对照借来的是「这段时间走了多远」。所以关键前提是通车前两条线走得一样，而不是水平一样。</Callout>
         </>
       )}

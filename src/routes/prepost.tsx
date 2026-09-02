@@ -386,9 +386,6 @@ function PrePostLesson() {
             answer={0}
             onAnswer={(ok) => track("小结", "选择题", ok ? "答对" : "答错")}
           />
-          <Panel title="写下你的结论">
-            <NoteBox value={profile.notes["prepost"] ?? ""} onChange={(v) => setNote("prepost", v)} />
-          </Panel>
           <Callout>事前事后估的是水平或趋势外推下的前后差。它承担了「窗口里没别的事」这条很重的假设。</Callout>
         </>
       )}
