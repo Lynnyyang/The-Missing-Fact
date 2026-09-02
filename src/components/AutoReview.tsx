@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "@/state/app";
 import { Panel } from "@/components/kit";
+import { RichText } from "@/components/RichText";
 
 /**
  * 小结页自动点评：进入本页时把界面状态与本课操作记录自动发给小果，

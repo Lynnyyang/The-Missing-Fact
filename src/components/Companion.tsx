@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/state/app";
 import { cn } from "@/lib/utils";
+import { RichText } from "@/components/RichText";
 
 type Turn = { role: "user" | "assistant"; content: string };
 
@@ -115,11 +116,11 @@ export function Companion() {
           <div
             key={i}
             className={cn(
-              "rounded-lg px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap",
+              "rounded-lg px-3 py-2 text-xs",
               t.role === "user" ? "ml-6 bg-secondary" : "mr-2 border border-border bg-card",
             )}
           >
-            {t.content}
+            <RichText text={t.content} />
           </div>
         ))}
         {busy && <p className="text-xs text-copper">小果正在看你的界面…</p>}
