@@ -64,9 +64,7 @@ export function AutoReview({ page = "小结" }: { page?: string } = {}) {
     >
       {busy && <p className="text-xs text-copper">小果正在回看你这一课的操作…</p>}
       {error && !busy && <p className="text-xs text-rose">{error}</p>}
-      {reply && !busy && (
-        <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">{reply}</p>
-      )}
+      {reply && !busy && <RichText text={reply} className="text-sm text-foreground/90" />}
     </Panel>
   );
 }
