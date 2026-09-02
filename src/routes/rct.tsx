@@ -24,10 +24,10 @@ export const Route = createFileRoute("/rct")({
       { title: "青藤抽签 · 随机分组｜寻找缺失的事实" },
       {
         name: "description",
-        content: "改名额、重抽签、点学生换组、开关不依从与缺考，亲手看随机分组怎么造出可信的对照组。",
+        content: "拖招生偏向、改名额、连抽多次、点学生换组、调不依从与缺考比例，亲手看随机抽签怎么造出可信的对照组。",
       },
       { property: "og:title", content: "青藤抽签 · 随机分组" },
-      { property: "og:description", content: "按成绩录取的期末差有多脏？公开抽签之后又剩下什么？" },
+      { property: "og:description", content: "按成绩录取的期末差有多脏？随机抽签之后又剩下什么？" },
     ],
   }),
   component: RctLesson,
@@ -36,53 +36,65 @@ export const Route = createFileRoute("/rct")({
 const STEPS: Step[] = [
   { id: "rct-1", title: "了解情况" },
   { id: "rct-2", title: "选择偏差" },
-  { id: "rct-3", title: "公开抽签" },
+  { id: "rct-3", title: "随机抽签" },
   { id: "rct-4", title: "潜在结果" },
   { id: "rct-5", title: "算出效应" },
   { id: "rct-6", title: "小结" },
 ];
 
 type Mode = "抽签" | "按成绩";
+type SortKey = "学习能力" | "家庭收入" | "入学前成绩" | "分组";
 
 function RctLesson() {
   const { visit, track, profile, setNote } = useApp();
   const [step, setStep] = useState(0);
 
-  const [mode, setMode] = useState<Mode>("按成绩");
+  // 0 = 完全随机抽签，1 = 完全按入学前成绩录取
+  const [bias, setBias] = useState(1);
   const [seats, setSeats] = useState(80);
   const [seed, setSeed] = useState(1);
   const [swaps, setSwaps] = useState<Record<number, boolean>>({});
   const [spill, setSpill] = useState(0);
   const [noncompliance, setNoncompliance] = useState(false);
+  const [noncompRate, setNoncompRate] = useState(0.18);
   const [attrition, setAttrition] = useState(false);
+  const [attritionRate, setAttritionRate] = useState(0.65);
   const [show, setShow] = useState<"观测" | "两格">("观测");
   const [opened, setOpened] = useState<number[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [checks, setChecks] = useState<string[]>([]);
+  const [sortKey, setSortKey] = useState<SortKey>("入学前成绩");
+  const [tableFilter, setTableFilter] = useState<"全部" | "实验班" | "对照">("全部");
+  const [draws, setDraws] = useState<number[]>([]);
 
   const students = useMemo(() => makeStudents(), []);
+  const mode: Mode = bias < 0.15 ? "抽签" : "按成绩";
 
-  const assigned = useMemo(() => {
+  const drawSet = useMemo(() => {
     const rand = rng(1000 + seed * 7919);
-    const withRank = students.map((s) => ({ s, r: mode === "抽签" ? rand() : s.eliteRank / students.length }));
-    withRank.sort((a, b) => a.r - b.r);
-    const set = new Set(withRank.slice(0, seats).map((x) => x.s.id));
-    return students.map((s) => ({
+    const withRank = students.map((s) => ({
       s,
-      treated: swaps[s.id] ?? set.has(s.id),
+      r: bias * (s.eliteRank / students.length) + (1 - bias) * rand(),
     }));
-  }, [students, mode, seats, seed, swaps]);
+    withRank.sort((a, b) => a.r - b.r);
+    return new Set(withRank.slice(0, seats).map((x) => x.s.id));
+  }, [students, bias, seats, seed]);
+
+  const assigned = useMemo(
+    () => students.map((s) => ({ s, treated: swaps[s.id] ?? drawSet.has(s.id) })),
+    [students, drawSet, swaps],
+  );
 
   const rows = useMemo(() => {
     const rand = rng(4242 + seed);
     return assigned.map(({ s, treated }) => {
-      const complied = treated ? !(noncompliance && rand() < 0.18) : false;
+      const complied = treated ? !(noncompliance && rand() < noncompRate) : false;
       const spillGain = !treated ? spill * 7.4 : 0;
       const y = complied ? s.y1 : s.y0 + spillGain;
-      const missing = attrition && !treated && s.ability < 44 && rand() < 0.65;
+      const missing = attrition && !treated && s.ability < 44 && rand() < attritionRate;
       return { s, treated, complied, y, missing };
     });
-  }, [assigned, noncompliance, attrition, spill, seed]);
+  }, [assigned, noncompliance, noncompRate, attrition, attritionRate, spill, seed]);
 
   const kept = rows.filter((r) => !r.missing);
   const T = kept.filter((r) => r.treated);
@@ -95,6 +107,56 @@ function RctLesson() {
   const est = diffMeans(T.map((r) => r.y), C.map((r) => r.y));
   const balanced = Math.abs(covar.能力.diff) < 2 && Math.abs(covar.收入.diff) < 1.2 && Math.abs(covar.入学前成绩.diff) < 1.8;
 
+  // 连抽多次：每次记录一次「入学前成绩差」
+  const runDraws = (n: number) => {
+    const out: number[] = [];
+    for (let k = 1; k <= n; k += 1) {
+      const rand = rng(90000 + (seed + k) * 6151);
+      const withRank = students.map((s) => ({
+        s,
+        r: bias * (s.eliteRank / students.length) + (1 - bias) * rand(),
+      }));
+      withRank.sort((a, b) => a.r - b.r);
+      const set = new Set(withRank.slice(0, seats).map((x) => x.s.id));
+      const t = students.filter((s) => set.has(s.id)).map((s) => s.pre);
+      const c = students.filter((s) => !set.has(s.id)).map((s) => s.pre);
+      out.push(mean(t) - mean(c));
+    }
+    setDraws(out);
+    track("随机抽签", "连抽多次", `${n} 次，抽签前成绩差平均 ${fmt(mean(out))}`);
+  };
+
+  const drawHist = useMemo(() => {
+    if (!draws.length) return [] as { name: string; v: number }[];
+    const lo = Math.min(-6, Math.floor(Math.min(...draws)));
+    const hi = Math.max(6, Math.ceil(Math.max(...draws)));
+    const bins = 12;
+    const w = (hi - lo) / bins;
+    const counts = new Array(bins).fill(0) as number[];
+    draws.forEach((d) => {
+      const i = Math.min(bins - 1, Math.max(0, Math.floor((d - lo) / w)));
+      counts[i] = (counts[i] ?? 0) + 1;
+    });
+    return counts.map((c, i) => ({ name: fmt(lo + w * i, 1), v: c }));
+  }, [draws]);
+
+  const sortedRows = useMemo(() => {
+    const list = rows.filter((r) =>
+      tableFilter === "全部" ? true : tableFilter === "实验班" ? r.treated : !r.treated,
+    );
+    const key = (r: (typeof rows)[number]) =>
+      sortKey === "学习能力"
+        ? -r.s.ability
+        : sortKey === "家庭收入"
+          ? -r.s.income
+          : sortKey === "入学前成绩"
+            ? -r.s.pre
+            : r.treated
+              ? -1
+              : 1;
+    return [...list].sort((a, b) => key(a) - key(b));
+  }, [rows, sortKey, tableFilter]);
+
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
@@ -102,27 +164,33 @@ function RctLesson() {
   const hints: string[] = [];
   if (step === 1 && mode === "按成绩")
     hints.push("按成绩录取时，两组在抽签之前的入学前成绩就差了 " + fmt(covar.入学前成绩.diff) + " 分，期末差里混着这一截。");
-  if (step === 1 && mode === "抽签") hints.push("换成公开抽签后，入学前成绩的差应该缩到接近 0，再看期末差。");
+  if (step === 1 && mode === "抽签") hints.push("换成随机抽签后，入学前成绩的差应该缩到接近 0，再看期末差。");
+  if (step === 1 && bias > 0.15 && bias < 0.85) hints.push(`招生偏向拖到 ${Math.round(bias * 100)}%，是半随机半按成绩，偏差也只消掉一半。`);
   if (step === 2 && !balanced) hints.push("三个差里有明显偏的，按「再抽一次」换个签，或看看你手动换组换掉了谁。");
   if (step === 2 && balanced) hints.push("三个差都不大，说明抽签没有系统性把某一类人抽进班；这不代表期末差就是政策效果的证明，但对照可用。");
+  if (step === 2 && draws.length) hints.push(`你连抽了 ${draws.length} 次，抽签前成绩差平均 ${fmt(mean(draws))} 分：单次会偏，多次围着 0 转才是随机抽签的意思。`);
   if (step === 2 && Object.keys(swaps).length > 0)
     hints.push(`你手动改了 ${Object.keys(swaps).length} 名学生的分组，随机性已经被你破坏了一部分。`);
   if (step === 3 && spill > 0) hints.push("溢出打开后对照组也沾到好处，两组之差会被压小，估计偏低。");
-  if (step === 4 && noncompliance) hints.push("有人抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。");
-  if (step === 4 && attrition) hints.push("缺考只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。");
+  if (step === 4 && noncompliance) hints.push(`有 ${Math.round(noncompRate * 100)}% 抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。`);
+  if (step === 4 && attrition) hints.push(`缺考比例 ${Math.round(attritionRate * 100)}%，只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。`);
   if (est.coversZero) hints.push("置信区间盖住 0，现在这组数字说不出有效果。");
 
   useCompanionSnapshot({
     lesson: "青藤抽签（随机分组）",
     page: STEPS[step]?.title ?? "",
     facts: {
-      录取办法: mode === "抽签" ? "公开抽签" : "按入学前成绩录取",
+      录取办法: mode === "抽签" ? "随机抽签" : "按入学前成绩录取",
+      "招生偏向（按成绩的比重）": `${Math.round(bias * 100)}%`,
       实验班名额: seats,
       抽签第几次: seed,
+      连抽次数: draws.length ? `${draws.length} 次，平均抽签前成绩差 ${fmt(mean(draws))}` : "还没连抽",
       手动换组人数: Object.keys(swaps).length,
+      名单排序: sortKey,
+      名单筛选: tableFilter,
       溢出强度: `${Math.round(spill * 100)}%`,
-      不依从: noncompliance ? "开" : "关",
-      缺考: attrition ? "开" : "关",
+      不依从: noncompliance ? `开，比例 ${Math.round(noncompRate * 100)}%` : "关",
+      缺考: attrition ? `开，比例 ${Math.round(attritionRate * 100)}%` : "关",
       "学习能力差（实验班−对照）": fmt(covar.能力.diff),
       "家庭收入差（万元/年）": fmt(covar.收入.diff),
       入学前成绩差: fmt(covar.入学前成绩.diff),
@@ -131,7 +199,7 @@ function RctLesson() {
       实验班人数: T.length,
       对照人数: C.length,
     },
-    hints: hints.length ? hints : ["控件都会改数字，试着先动名额和抽签。"],
+    hints: hints.length ? hints : ["控件都会改数字，试着先拖招生偏向，再连抽几次看差怎么散开。"],
   });
 
   const covarChart = [
@@ -188,21 +256,37 @@ function RctLesson() {
 
       {step === 1 && (
         <>
-          <Panel title="两种录取办法，切换看两组在抽签之前差多少">
+          <Panel title="录取办法可以连续地调" hint="拖这根杆，从纯随机抽签一路走到纯按成绩录取。">
             <div className="flex gap-2">
               {(["按成绩", "抽签"] as Mode[]).map((m) => (
                 <Chip
                   key={m}
                   active={mode === m}
                   onClick={() => {
-                    setMode(m);
+                    setBias(m === "抽签" ? 0 : 1);
                     setSwaps({});
-                    track("选择偏差", "录取办法", m === "抽签" ? "公开抽签" : "按入学前成绩录取");
+                    track("选择偏差", "录取办法", m === "抽签" ? "随机抽签" : "按入学前成绩录取");
                   }}
                 >
-                  {m === "抽签" ? "公开抽签" : "按入学前成绩录取"}
+                  {m === "抽签" ? "随机抽签" : "按入学前成绩录取"}
                 </Chip>
               ))}
+            </div>
+            <div className="mt-4">
+              <Dial
+                label="招生偏向：按成绩的比重"
+                value={Math.round(bias * 100)}
+                min={0}
+                max={100}
+                step={5}
+                unit="%"
+                onChange={(v) => {
+                  setBias(v / 100);
+                  setSwaps({});
+                  track("选择偏差", "招生偏向", `${v}% 按成绩`);
+                }}
+                hint="0% 是完全摇号，100% 是完全按入学前成绩排队。"
+              />
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="学习能力差" value={covar.能力.diff} tone={Math.abs(covar.能力.diff) > 2 ? "rose" : "teal"} />
@@ -217,7 +301,7 @@ function RctLesson() {
             <Callout tone={mode === "按成绩" ? "rose" : "copper"}>
               {mode === "按成绩"
                 ? "按成绩录取时，入学前差距在政策发生之前就存在，期末差是脏的。"
-                : "公开抽签后抽签前的差回到 0 附近，期末差才接近实验班本身的作用。"}
+                : "随机抽签后抽签前的差回到 0 附近，期末差才接近实验班本身的作用。"}
             </Callout>
           </Panel>
           <Panel title="抽签前的三个差" hint="靠近 0 才说明分组齐整。">
@@ -256,18 +340,18 @@ function RctLesson() {
                 unit=" 人"
                 onChange={(v) => {
                   setSeats(v);
-                  track("公开抽签", "实验班名额", v);
+                  track("随机抽签", "实验班名额", v);
                 }}
                 hint="名额越少，两组人数越不平衡，置信区间越宽。"
               />
-              <div className="flex items-end gap-2">
+              <div className="flex flex-wrap items-end gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    setMode("抽签");
+                    setBias(0);
                     setSeed((s) => s + 1);
                     setSwaps({});
-                    track("公开抽签", "再抽一次", `第 ${seed + 1} 次`);
+                    track("随机抽签", "再抽一次", `第 ${seed + 1} 次`);
                   }}
                   className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
                 >
@@ -277,7 +361,7 @@ function RctLesson() {
                   type="button"
                   onClick={() => {
                     setSwaps({});
-                    track("公开抽签", "撤销手动换组", "全部撤销");
+                    track("随机抽签", "撤销手动换组", "全部撤销");
                   }}
                   className="rounded-md border border-border px-3 py-2 text-xs"
                 >
@@ -295,8 +379,100 @@ function RctLesson() {
               />
             </div>
           </Panel>
+
+          <Panel title="连着抽很多次" hint="一次抽签会偏，很多次抽签的差围着 0 转，这才是随机抽签的承诺。">
+            <div className="flex flex-wrap items-center gap-2">
+              {[20, 100, 500].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => runDraws(n)}
+                  className="rounded-md border border-border px-3 py-2 text-xs hover:border-copper"
+                >
+                  连抽 {n} 次
+                </button>
+              ))}
+              {draws.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraws([]);
+                    track("随机抽签", "清空连抽结果", "清空");
+                  }}
+                  className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground"
+                >
+                  清空
+                </button>
+              )}
+            </div>
+            {draws.length > 0 ? (
+              <>
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <Tile label="抽签次数" value={draws.length} unit=" 次" />
+                  <Tile label="抽签前成绩差的平均" value={mean(draws)} tone="teal" />
+                  <Tile label="最偏的一次" value={draws.reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a), 0)} tone="rose" />
+                  <Tile
+                    label="差超过 2 分的次数"
+                    value={draws.filter((d) => Math.abs(d) > 2).length}
+                    unit=" 次"
+                    tone="copper"
+                  />
+                </div>
+                <div className="mt-4 h-52">
+                  <ResponsiveContainer>
+                    <BarChart data={drawHist}>
+                      <CartesianGrid stroke="var(--border)" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                      <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                      <Tooltip
+                        contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }}
+                      />
+                      <Bar dataKey="v" radius={3} fill="var(--teal)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <Callout tone={Math.abs(mean(draws)) < 0.6 ? "copper" : "rose"}>
+                  {Math.abs(mean(draws)) < 0.6
+                    ? "很多次抽签的抽签前成绩差平均下来贴着 0：单次抽签可以运气不好，但没有系统偏向。"
+                    : "平均还明显偏离 0，说明现在的招生偏向不是纯随机，先把上一页的偏向拖到 0。"}
+                </Callout>
+              </>
+            ) : (
+              <p className="mt-3 text-xs text-muted-foreground">按一次上面的按钮，就会把每次抽签的「抽签前成绩差」画成分布。</p>
+            )}
+          </Panel>
+
           <Panel title="点学生换组" hint="点一行就把这名学生挪到另一组，看三个差怎么被你带偏。">
-            <div className="max-h-72 overflow-y-auto rounded-lg border border-border">
+            <div className="flex flex-wrap gap-2">
+              {(["学习能力", "家庭收入", "入学前成绩", "分组"] as SortKey[]).map((k) => (
+                <Chip
+                  key={k}
+                  active={sortKey === k}
+                  onClick={() => {
+                    setSortKey(k);
+                    track("随机抽签", "名单排序", k);
+                  }}
+                >
+                  按{k}排
+                </Chip>
+              ))}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(["全部", "实验班", "对照"] as const).map((f) => (
+                <Chip
+                  key={f}
+                  tone="teal"
+                  active={tableFilter === f}
+                  onClick={() => {
+                    setTableFilter(f);
+                    track("随机抽签", "名单筛选", f);
+                  }}
+                >
+                  只看{f}
+                </Chip>
+              ))}
+            </div>
+            <div className="mt-3 max-h-72 overflow-y-auto rounded-lg border border-border">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-card text-muted-foreground">
                   <tr>
@@ -308,16 +484,21 @@ function RctLesson() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.slice(0, 40).map((r) => (
+                  {sortedRows.slice(0, 40).map((r) => (
                     <tr
                       key={r.s.id}
                       onClick={() => {
                         setSwaps((p) => ({ ...p, [r.s.id]: !r.treated }));
-                        track("公开抽签", "点学生换组", `${r.s.name} → ${!r.treated ? "实验班" : "对照"}`);
+                        track("随机抽签", "点学生换组", `${r.s.name} → ${!r.treated ? "实验班" : "对照"}`);
                       }}
-                      className="cursor-pointer border-t border-border hover:bg-accent"
+                      className={`cursor-pointer border-t border-border hover:bg-accent ${
+                        swaps[r.s.id] !== undefined ? "bg-accent/60" : ""
+                      }`}
                     >
-                      <td className="px-2 py-1.5">{r.s.name}</td>
+                      <td className="px-2 py-1.5">
+                        {r.s.name}
+                        {swaps[r.s.id] !== undefined && <span className="ml-2 text-[10px] text-copper">手动</span>}
+                      </td>
                       <td className="num px-2 py-1.5 text-right">{fmt(r.s.ability, 1)}</td>
                       <td className="num px-2 py-1.5 text-right">{fmt(r.s.income, 1)}</td>
                       <td className="num px-2 py-1.5 text-right">{fmt(r.s.pre, 1)}</td>
@@ -417,32 +598,64 @@ function RctLesson() {
                 ＝ {fmt(mean(T.map((r) => r.y)))} − {fmt(mean(C.map((r) => r.y)))} ＝ {fmt(est.diff)}
               </p>
               <p className="mt-3 text-xs text-muted-foreground">
-                之所以能用对照组的均值代替实验班「没进班」那一格，靠的是公开抽签让两组在政策发生之前平均意义上没有系统差别。
+                之所以能用对照组的均值代替实验班「没进班」那一格，靠的是随机抽签让两组在政策发生之前平均意义上没有系统差别。
                 置信区间用两组的组内波动和人数算出来，衡量这个差有多不稳。
               </p>
             </div>
           </Panel>
 
-          <Panel title="加两种现实麻烦">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Toggle
-                label="不依从：抽中的人有些没去上课"
-                checked={noncompliance}
-                hint="按分组算出来的是意向处理效应。"
-                onChange={(v) => {
-                  setNoncompliance(v);
-                  track("算出效应", "不依从", v ? "开" : "关");
-                }}
-              />
-              <Toggle
-                label="缺考：对照组里低能力学生更容易缺考"
-                checked={attrition}
-                hint="对照被拧高，估计偏小。"
-                onChange={(v) => {
-                  setAttrition(v);
-                  track("算出效应", "缺考", v ? "开" : "关");
-                }}
-              />
+          <Panel title="加两种现实麻烦" hint="打开开关后还能拖比例，看这个差被拉走多少。">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-3">
+                <Toggle
+                  label="不依从：抽中的人有些没去上课"
+                  checked={noncompliance}
+                  hint="按分组算出来的是意向处理效应。"
+                  onChange={(v) => {
+                    setNoncompliance(v);
+                    track("算出效应", "不依从", v ? "开" : "关");
+                  }}
+                />
+                {noncompliance && (
+                  <Dial
+                    label="抽中却没去上课的比例"
+                    value={noncompRate}
+                    min={0}
+                    max={0.6}
+                    step={0.02}
+                    onChange={(v) => {
+                      setNoncompRate(v);
+                      track("算出效应", "不依从比例", `${Math.round(v * 100)}%`);
+                    }}
+                    hint="比例越大，按分组算出来的差越被稀释。"
+                  />
+                )}
+              </div>
+              <div className="space-y-3">
+                <Toggle
+                  label="缺考：对照组里低能力学生更容易缺考"
+                  checked={attrition}
+                  hint="对照被拧高，估计偏小。"
+                  onChange={(v) => {
+                    setAttrition(v);
+                    track("算出效应", "缺考", v ? "开" : "关");
+                  }}
+                />
+                {attrition && (
+                  <Dial
+                    label="低能力学生缺考的比例"
+                    value={attritionRate}
+                    min={0}
+                    max={0.95}
+                    step={0.05}
+                    onChange={(v) => {
+                      setAttritionRate(v);
+                      track("算出效应", "缺考比例", `${Math.round(v * 100)}%`);
+                    }}
+                    hint="拖大它，对照组剩下的人越来越强。"
+                  />
+                )}
+              </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="实验班期末均值" value={mean(T.map((r) => r.y))} tone="copper" />
@@ -464,7 +677,7 @@ function RctLesson() {
 
           <Panel title="核对清单" hint="全部勾上才算把这个数字交出去。">
             <div className="flex flex-wrap gap-2">
-              {["分组是公开抽签", "三个抽签前的差都不大", "溢出已检查", "置信区间没盖住 0", "知道估的是意向处理效应还是上课效果"].map(
+              {["分组是随机抽签", "三个抽签前的差都不大", "溢出已检查", "置信区间没盖住 0", "知道估的是意向处理效应还是上课效果"].map(
                 (c) => (
                   <Chip
                     key={c}
@@ -487,7 +700,7 @@ function RctLesson() {
         <>
           <AutoReview />
           <Quiz
-            question="公开抽签让这个比较可信，靠的是什么？"
+            question="随机抽签让这个比较可信，靠的是什么？"
             options={[
               "抽签让两组在抽签之前平均意义上没有系统差别",
               "抽签让每个人的能力都变成一样",
