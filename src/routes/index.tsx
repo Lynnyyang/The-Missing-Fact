@@ -83,7 +83,7 @@ function Hub() {
               <h1 className="text-3xl leading-tight font-semibold">寻找缺失的事实</h1>
               <h2 className="text-3xl leading-tight font-semibold text-copper">探究政策的真实效应</h2>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                同一个人不能同时被处理又不被处理。缺的那条世界要你自己造出来。四课里的每个控件都会改图或改数：
+                同一个人不能同时被处理又不被处理。缺的那个世界要你自己造出来。四课里的每个控件都会改图或改数：
                 拖名额、重抽签、点学生换组、换对照街区、调供体权重、把政策年份改成假的。小果一直看着你刚点过什么。
               </p>
 
