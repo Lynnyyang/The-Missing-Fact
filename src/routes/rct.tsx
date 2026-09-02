@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
-import { Callout, Chip, Dial, GuessBox, NoteBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
+import { Callout, Chip, Dial, NoteBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
 import { AutoReview } from "@/components/AutoReview";
 import { makeStudents, type Student } from "@/lib/synth";
 import { diffMeans, fmt, mean, rng } from "@/lib/stats";
@@ -59,8 +59,6 @@ function RctLesson() {
   const [opened, setOpened] = useState<number[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [checks, setChecks] = useState<string[]>([]);
-  const [revealed, setRevealed] = useState(false);
-
 
   const students = useMemo(() => makeStudents(), []);
 
@@ -112,9 +110,7 @@ function RctLesson() {
   if (step === 3 && spill > 0) hints.push("溢出打开后对照组也沾到好处，两组之差会被压小，估计偏低。");
   if (step === 4 && noncompliance) hints.push("有人抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。");
   if (step === 4 && attrition) hints.push("缺考只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。");
-  if (est.coversZero && !(step === 4 && !revealed))
-    hints.push("置信区间盖住 0，现在这组数字说不出有效果。");
-
+  if (est.coversZero) hints.push("置信区间盖住 0，现在这组数字说不出有效果。");
 
   useCompanionSnapshot({
     lesson: "青藤抽签（随机分组）",
@@ -130,8 +126,8 @@ function RctLesson() {
       "学习能力差（实验班−对照）": fmt(covar.能力.diff),
       "家庭收入差（万元/年）": fmt(covar.收入.diff),
       入学前成绩差: fmt(covar.入学前成绩.diff),
-      期末科学测验差: step === 4 && !revealed ? "学生还没猜，界面未显示" : fmt(est.diff),
-      "95%置信区间": step === 4 && !revealed ? "学生还没猜，界面未显示" : `${fmt(est.lo)} 到 ${fmt(est.hi)}`,
+      期末科学测验差: fmt(est.diff),
+      "95%置信区间": `${fmt(est.lo)} 到 ${fmt(est.hi)}`,
       实验班人数: T.length,
       对照人数: C.length,
     },
@@ -416,12 +412,9 @@ function RctLesson() {
         <>
           <Panel title="先看清这个数字是怎么算出来的" hint="随机分组成立时，这个差才等于政策效应。">
             <div className="rounded-lg border border-border bg-card/60 p-4 text-sm leading-relaxed">
-              <p className="num text-copper">
-                效应估计 ＝ 实验班期末均值 − 对照期末均值
-              </p>
+              <p className="num text-copper">效应估计 ＝ 实验班期末均值 − 对照期末均值</p>
               <p className="num mt-2 text-xs text-muted-foreground">
-                ＝ {fmt(mean(T.map((r) => r.y)))} − {fmt(mean(C.map((r) => r.y)))}
-                {revealed ? ` ＝ ${fmt(est.diff)}` : "　＝ ？（先猜一个）"}
+                ＝ {fmt(mean(T.map((r) => r.y)))} − {fmt(mean(C.map((r) => r.y)))} ＝ {fmt(est.diff)}
               </p>
               <p className="mt-3 text-xs text-muted-foreground">
                 之所以能用对照组的均值代替实验班「没进班」那一格，靠的是公开抽签让两组在政策发生之前平均意义上没有系统差别。
@@ -431,7 +424,6 @@ function RctLesson() {
           </Panel>
 
           <Panel title="加两种现实麻烦">
-
             <div className="grid gap-2 sm:grid-cols-2">
               <Toggle
                 label="不依从：抽中的人有些没去上课"
@@ -455,16 +447,9 @@ function RctLesson() {
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="实验班期末均值" value={mean(T.map((r) => r.y))} tone="copper" />
               <Tile label="对照期末均值" value={mean(C.map((r) => r.y))} tone="teal" />
-              <Tile label="差" value={revealed ? est.diff : "先猜一个"} />
-              <Tile
-                label="置信区间"
-                value={revealed ? `${fmt(est.lo)} ~ ${fmt(est.hi)}` : "先猜一个"}
-                tone={revealed ? (est.coversZero ? "rose" : "teal") : "copper"}
-              />
+              <Tile label="差" value={est.diff} />
+              <Tile label="置信区间" value={`${fmt(est.lo)} ~ ${fmt(est.hi)}`} tone={est.coversZero ? "rose" : "teal"} />
             </div>
-            {!revealed && (
-              <p className="mt-2 text-xs text-muted-foreground">差和置信区间要等你在下面猜过一次，才会显示出来。</p>
-            )}
             {(noncompliance || attrition) && (
               <div className="mt-3">
                 <Callout tone="rose">
@@ -476,17 +461,6 @@ function RctLesson() {
               </div>
             )}
           </Panel>
-
-          <GuessBox
-            question="先猜：实验班让期末科学测验平均高了多少分？"
-            unit="分"
-            truth={est.diff}
-            tolerance={2.5}
-            onResolve={(g, ok) => {
-              setRevealed(true);
-              track("算出效应", "先猜再对照", `猜 ${fmt(g)}，${ok ? "在容差内" : "偏了"}`);
-            }}
-          />
 
           <Panel title="核对清单" hint="全部勾上才算把这个数字交出去。">
             <div className="flex flex-wrap gap-2">
