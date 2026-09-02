@@ -98,6 +98,10 @@ function PrePostLesson() {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
 
+  useEffect(() => {
+    if (step !== 3) setEffectRevealed(false);
+  }, [step, counterfactual, startMonth, window_, shocks]);
+
   const hints: string[] = [];
   if (step === 2 && fake)
     hints.push(
@@ -124,7 +128,7 @@ function PrePostLesson() {
       "实际使用的窗口（月）": effWindow,
       事前均值: fmt(preMean, 0),
       事后均值: fmt(postMean, 0),
-      "估计效应（人次/月）": fmt(estimate, 0),
+      "估计效应（人次/月）": step === 3 && !effectRevealed ? "未揭示（等待用户先猜）" : fmt(estimate, 0),
       "事前每月趋势（人次）": fmt(line.b, 1),
       打开的干扰: [shocks.typhoon && "台风", shocks.viral && "短视频", shocks.fire && "火灾"].filter(Boolean).join("、") || "无",
     },
