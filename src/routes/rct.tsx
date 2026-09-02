@@ -62,6 +62,9 @@ function RctLesson() {
   const [questions, setQuestions] = useState<string[]>([]);
   const [checks, setChecks] = useState<string[]>([]);
   const [draws, setDraws] = useState<number[]>([]);
+  const [drawMode, setDrawMode] = useState<Mode>("抽签");
+  const [showN, setShowN] = useState(14);
+
 
   const students = useMemo(() => makeStudents(), []);
   const mode: Mode = bias < 0.15 ? "抽签" : "按成绩";
