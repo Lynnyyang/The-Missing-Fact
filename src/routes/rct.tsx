@@ -153,7 +153,7 @@ function RctLesson() {
           <Panel title="情况" hint="实验班学位只够一半申请者。校长想按入学前成绩录取。">
             <p className="text-sm leading-relaxed">
               我们要估的是：<span className="text-copper">进了实验班的这批学生，如果没进，期末科学测验会考多少。</span>
-              那条世界不存在，所以要给它找替身。
+              那个世界不存在，所以要给它找替身。
             </p>
           </Panel>
           <Panel title="勾出这一课真正要回答的问题" hint="可以多选，选错了小果会说。">
