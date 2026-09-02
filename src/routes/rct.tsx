@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
-import { Callout, Chip, Dial, GuessBox, NoteBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
+import { Callout, Chip, Dial, NoteBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
 import { AutoReview } from "@/components/AutoReview";
 import { makeStudents, type Student } from "@/lib/synth";
 import { diffMeans, fmt, mean, rng } from "@/lib/stats";
