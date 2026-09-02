@@ -155,7 +155,9 @@ function RctLesson() {
   if (step === 1 && bias > 0.15 && bias < 0.85) hints.push(`招生偏向拖到 ${Math.round(bias * 100)}%，是半随机半按成绩，偏差也只消掉一半。`);
   if (step === 2 && !balanced) hints.push("三个差里有明显偏的，按「再抽一次」换个签，或看看你手动换组换掉了谁。");
   if (step === 2 && balanced) hints.push("三个差都不大，说明抽签没有系统性把某一类人抽进班；这不代表期末差就是政策效果的证明，但对照可用。");
+  if (step === 2 && draws.length && drawMode === "按成绩") hints.push("现在连抽用的是按成绩录取，每次的差都落在同一边；切到随机抽签再抽一遍，比一比两个分布的位置。");
   if (step === 2 && draws.length) hints.push(`你连抽了 ${draws.length} 次，抽签前成绩差平均 ${fmt(mean(draws))} 分：单次会偏，多次围着 0 转才是随机抽签的意思。`);
+  if (step === 3 && show === "两格") hints.push("你正在偷看两格：现实里同一个人只能看到一格，看完记得回到「只看观测到的」想想对照组替谁说话。");
   if (step === 3 && spill > 0) hints.push("溢出打开后对照组也沾到好处，两组之差会被压小，估计偏低。");
   if (step === 4 && noncompliance) hints.push(`有 ${Math.round(noncompRate * 100)}% 抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。`);
   if (step === 4 && attrition) hints.push(`缺考比例 ${Math.round(attritionRate * 100)}%，只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。`);
@@ -169,7 +171,11 @@ function RctLesson() {
       "招生偏向（按成绩的比重）": `${Math.round(bias * 100)}%`,
       实验班名额: seats,
       抽签第几次: seed,
+      连抽用哪种办法: drawMode === "抽签" ? "随机抽签" : "按成绩录取",
       连抽次数: draws.length ? `${draws.length} 次，平均抽签前成绩差 ${fmt(mean(draws))}` : "还没连抽",
+      潜在结果画几个人: `${showN} 人`,
+      两格显示: show === "两格" ? "偷看两格" : "只看观测到的",
+      偷看的人数: opened.length,
       溢出强度: `${Math.round(spill * 100)}%`,
       不依从: noncompliance ? `开，比例 ${Math.round(noncompRate * 100)}%` : "关",
       缺考: attrition ? `开，比例 ${Math.round(attritionRate * 100)}%` : "关",
