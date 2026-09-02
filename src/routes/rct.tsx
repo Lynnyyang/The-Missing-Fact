@@ -180,7 +180,7 @@ function RctLesson() {
       连抽用哪种办法: drawMode === "抽签" ? "随机抽签" : "按成绩录取",
       连抽次数: draws.length ? `${draws.length} 次，平均抽签前成绩差 ${fmt(mean(draws))}` : "还没连抽",
       潜在结果画几个人: `${showN} 人`,
-      两格显示: show === "两格" ? "偷看两格" : "只看观测到的",
+      显示模式: show === "两格" ? "偷看两格（现实里做不到）" : "只看观测到的",
       偷看的人数: opened.length,
       溢出强度: `${Math.round(spill * 100)}%`,
       不依从: noncompliance ? `开，比例 ${Math.round(noncompRate * 100)}%` : "关",
