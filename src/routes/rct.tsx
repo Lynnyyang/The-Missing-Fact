@@ -407,8 +407,8 @@ function RctLesson() {
 
       {step === 3 && (
         <>
-          <Panel title="同一个人只有一格能被看见">
-            <div className="flex flex-wrap gap-2">
+          <Panel title="同一个人只有一格能被看见" hint="每一行是一个人：铜点是「进班」的分，青点是「不进班」的分。看不见的那一格画成空心问号，点一下这行可以偷看。">
+            <div className="flex flex-wrap items-center gap-2">
               {(["观测", "两格"] as const).map((m) => (
                 <Chip
                   key={m}
@@ -421,10 +421,45 @@ function RctLesson() {
                   {m === "观测" ? "只看观测到的" : "偷看两格（现实里做不到）"}
                 </Chip>
               ))}
+              {opened.length > 0 && (
+                <Chip
+                  tone="teal"
+                  onClick={() => {
+                    setOpened([]);
+                    track("潜在结果", "收起偷看的格子", `${opened.length} 人`);
+                  }}
+                >
+                  收起偷看的 {opened.length} 人
+                </Chip>
+              )}
             </div>
-            <div className="mt-4 grid gap-1.5 sm:grid-cols-2">
-              {rows.slice(0, 12).map((r) => {
+
+            <div className="mt-3">
+              <Dial
+                label="画几个人"
+                value={showN}
+                min={6}
+                max={40}
+                unit=" 人"
+                onChange={(v) => {
+                  setShowN(v);
+                  track("潜在结果", "画几个人", `${v} 人`);
+                }}
+                hint="人越多，越能看出两组的分布是怎么叠在一起的。"
+              />
+            </div>
+
+            <div className="mt-4 flex items-center justify-between px-1 text-[11px] text-muted-foreground">
+              <span className="num">40 分</span>
+              <span>期末科学测验</span>
+              <span className="num">100 分</span>
+            </div>
+            <div className="mt-1 space-y-1">
+              {rows.slice(0, showN).map((r) => {
                 const open = opened.includes(r.s.id) || show === "两格";
+                const pos = (v: number) => `${Math.min(98, Math.max(0, ((v - 40) / 60) * 100))}%`;
+                const seen = r.treated ? r.s.y1 : r.s.y0;
+                const hidden = r.treated ? r.s.y0 : r.s.y1;
                 return (
                   <button
                     key={r.s.id}
@@ -433,25 +468,65 @@ function RctLesson() {
                       setOpened((p) => (p.includes(r.s.id) ? p.filter((x) => x !== r.s.id) : [...p, r.s.id]));
                       track("潜在结果", "点开格子", r.s.name);
                     }}
-                    className="panel flex items-center justify-between px-3 py-2 text-xs hover:border-copper"
+                    className="group flex w-full items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-secondary/60"
                   >
-                    <span>
-                      {r.s.name}
-                      <span className={r.treated ? "ml-2 text-copper" : "ml-2 text-muted-foreground"}>
-                        {r.treated ? "实验班" : "对照"}
+                    <span className="w-16 shrink-0 truncate text-[11px] text-muted-foreground">{r.s.name}</span>
+                    <span className={"w-10 shrink-0 text-[10px] " + (r.treated ? "text-copper" : "text-teal")}>
+                      {r.treated ? "实验班" : "对照"}
+                    </span>
+                    <span className="relative h-5 min-w-0 flex-1 rounded-full bg-secondary/50">
+                      {open && (
+                        <span
+                          className="absolute top-1/2 h-px bg-border"
+                          style={{
+                            left: pos(Math.min(seen, hidden)),
+                            width: `${(Math.abs(r.s.y1 - r.s.y0) / 60) * 100}%`,
+                          }}
+                        />
+                      )}
+                      <span
+                        title={`观测到：${fmt(seen, 1)} 分`}
+                        className={
+                          "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full " +
+                          (r.treated ? "bg-copper" : "bg-teal")
+                        }
+                        style={{ left: pos(seen) }}
+                      />
+                      <span
+                        className={
+                          "absolute top-1/2 flex h-3 w-3 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-dashed text-[8px] " +
+                          (r.treated ? "border-teal text-teal" : "border-copper text-copper") +
+                          (open ? " opacity-90" : " opacity-40")
+                        }
+                        style={{ left: open ? pos(hidden) : "100%" }}
+                      >
+                        {open ? "" : "？"}
                       </span>
                     </span>
-                    <span className="num flex gap-3">
-                      <span className={r.treated ? "text-copper" : open ? "text-muted-foreground" : "opacity-30"}>
-                        进班 {r.treated || open ? fmt(r.s.y1, 1) : "？"}
-                      </span>
-                      <span className={!r.treated ? "text-teal" : open ? "text-muted-foreground" : "opacity-30"}>
-                        不进班 {!r.treated || open ? fmt(r.s.y0, 1) : "？"}
+                    <span className="num w-24 shrink-0 text-right text-[11px]">
+                      <span className={r.treated ? "text-copper" : "text-teal"}>{fmt(seen, 1)}</span>
+                      <span className="mx-1 text-muted-foreground">/</span>
+                      <span className={open ? "text-muted-foreground" : "opacity-40"}>
+                        {open ? fmt(hidden, 1) : "？"}
                       </span>
                     </span>
                   </button>
                 );
               })}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Tile label="实验班观测均值" value={mean(T.map((r) => r.y))} tone="copper" />
+              <Tile label="对照观测均值" value={mean(C.map((r) => r.y))} tone="teal" />
+              <Tile
+                label={show === "两格" ? "偷看：每个人自己的差的平均" : "偷看后才显示"}
+                value={
+                  show === "两格"
+                    ? fmt(mean(rows.slice(0, showN).map((r) => r.s.y1 - r.s.y0)))
+                    : "先切到两格"
+                }
+                tone="rose"
+              />
             </div>
             <div className="mt-3">
               <Callout>
@@ -459,6 +534,7 @@ function RctLesson() {
               </Callout>
             </div>
           </Panel>
+
           <Panel title="溢出：对照组也沾到好处" hint="拖大它，看两组之差怎么被压小。">
             <Dial
               label="溢出强度"
