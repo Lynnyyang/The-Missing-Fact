@@ -273,7 +273,7 @@ function PrePostLesson() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <Tile label="估计效应" value={estimate} unit="人次/月" tone={fake ? "rose" : "copper"} />
                 <Tile label="事前每月趋势" value={line.b} unit="人次" />
-                <Tile label="实际使用的窗口" value={effWindow} unit="月" />
+                <Tile label="实际使用的窗口" value={`${effWindow} 月`} />
               </div>
               {trimmed && (
                 <div className="mt-3">
