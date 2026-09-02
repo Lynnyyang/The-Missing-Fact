@@ -50,26 +50,28 @@ export function fitLine(xs: number[], ys: number[]) {
   let num = 0;
   let den = 0;
   for (let i = 0; i < n; i++) {
-    num += (xs[i] - mx) * (ys[i] - my);
-    den += (xs[i] - mx) ** 2;
+    const x = xs[i] ?? 0;
+    const y = ys[i] ?? 0;
+    num += (x - mx) * (y - my);
+    den += (x - mx) ** 2;
   }
   const b = den === 0 ? 0 : num / den;
   return { a: my - b * mx, b };
 }
 
 export const rmse = (a: number[], b: number[]) =>
-  Math.sqrt(mean(a.map((v, i) => (v - b[i]) ** 2)));
+  Math.sqrt(mean(a.map((v, i) => (v - (b[i] ?? 0)) ** 2)));
 
 /** 合成控制：非负权重、和为 1，投影梯度搜索拟合处理前轨迹 */
 export function fitSynth(target: number[], donors: number[][], iters = 4000, step = 0.06) {
   const k = donors.length;
   if (!k) return { weights: [] as number[], rmse: 0 };
   let w = new Array(k).fill(1 / k);
-  const path = () => target.map((_, t) => donors.reduce((s, d, j) => s + w[j] * d[t], 0));
+  const path = () => target.map((_, t) => donors.reduce((s, d, j) => s + (w[j] ?? 0) * (d[t] ?? 0), 0));
   for (let it = 0; it < iters; it++) {
     const p = path();
-    const grad = donors.map((d) => mean(p.map((v, t) => 2 * (v - target[t]) * d[t])));
-    w = w.map((v, j) => v - step * grad[j]);
+    const grad = donors.map((d) => mean(p.map((v, t) => 2 * (v - (target[t] ?? 0)) * (d[t] ?? 0))));
+    w = w.map((v, j) => v - step * (grad[j] ?? 0));
     // 投影到单纯形
     w = w.map((v) => Math.max(v, 0));
     const s = w.reduce((a, b) => a + b, 0);

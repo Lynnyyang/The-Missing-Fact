@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DidRouteImport } from './routes/did'
 import { Route as PrepostRouteImport } from './routes/prepost'
 import { Route as RctRouteImport } from './routes/rct'
+import { Route as SynthRouteImport } from './routes/synth'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const RctRoute = RctRouteImport.update({
   path: '/rct',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SynthRoute = SynthRouteImport.update({
+  id: '/synth',
+  path: '/synth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/did': typeof DidRoute
   '/prepost': typeof PrepostRoute
   '/rct': typeof RctRoute
+  '/synth': typeof SynthRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/did': typeof DidRoute
   '/prepost': typeof PrepostRoute
   '/rct': typeof RctRoute
+  '/synth': typeof SynthRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,15 @@ export interface FileRoutesById {
   '/did': typeof DidRoute
   '/prepost': typeof PrepostRoute
   '/rct': typeof RctRoute
+  '/synth': typeof SynthRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/did' | '/prepost' | '/rct' | '/api/chat'
+  fullPaths: '/' | '/did' | '/prepost' | '/rct' | '/synth' | '/api/chat'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/did' | '/prepost' | '/rct' | '/api/chat'
-  id: '__root__' | '/' | '/did' | '/prepost' | '/rct' | '/api/chat'
+  to: '/' | '/did' | '/prepost' | '/rct' | '/synth' | '/api/chat'
+  id: '__root__' | '/' | '/did' | '/prepost' | '/rct' | '/synth' | '/api/chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +85,7 @@ export interface RootRouteChildren {
   DidRoute: typeof DidRoute
   PrepostRoute: typeof PrepostRoute
   RctRoute: typeof RctRoute
+  SynthRoute: typeof SynthRoute
   ApiChatRoute: typeof ApiChatRoute
 }
 
@@ -109,6 +119,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RctRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/synth': {
+      id: '/synth'
+      path: '/synth'
+      fullPath: '/synth'
+      preLoaderRoute: typeof SynthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -124,6 +141,7 @@ const rootRouteChildren: RootRouteChildren = {
   DidRoute: DidRoute,
   PrepostRoute: PrepostRoute,
   RctRoute: RctRoute,
+  SynthRoute: SynthRoute,
   ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport

@@ -124,8 +124,8 @@ export function makeBlocks(): Block[] {
 export type City = {
   key: string;
   name: string;
-  alreadyTreated?: boolean;
-  note?: string;
+  alreadyTreated?: boolean | undefined;
+  note?: string | undefined;
   pm: number[];
 };
 
