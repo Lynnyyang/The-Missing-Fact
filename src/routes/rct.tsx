@@ -585,17 +585,24 @@ function RctLesson() {
                 label={show === "两格" ? "偷看：每个人自己的差的平均" : "偷看后才显示"}
                 value={
                   show === "两格"
-                    ? fmt(mean(rows.slice(0, showN).map((r) => r.s.y1 - r.s.y0)))
+                    ? fmt(mean(rows.slice(0, showN).map((r) => r.s.y1 - (r.s.y0 + spill * 7.4))))
                     : "先切到两格"
                 }
                 tone="rose"
               />
             </div>
-            <div className="mt-3">
+            <div className="mt-3 space-y-2">
+              {spill > 0 && (
+                <Callout tone="rose">
+                  溢出强度 {Math.round(spill * 100)}%：上图里对照同学的点整体往右挪了 {fmt(spill * 7.4, 1)} 分，空心小圈是他们没沾到好处时的位置。
+                  实验班那一行的问号格也跟着右移——因为他们要是没进班，也会被同学带一把。两组之差因此被压小。
+                </Callout>
+              )}
               <Callout>
                 问号那一格就是缺失的事实。随机分组的作用不是把问号填上，而是让对照组的平均值能替处理组的问号说话。
               </Callout>
             </div>
+
           </Panel>
 
           <Panel title="溢出：对照组也沾到好处" hint="拖大它，看两组之差怎么被压小。">
