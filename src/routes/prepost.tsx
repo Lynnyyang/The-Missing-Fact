@@ -57,6 +57,7 @@ function PrePostLesson() {
   const [startMonth, setStartMonth] = useState(POLICY_MONTH);
   const [window_, setWindow] = useState(18);
   const [shocks, setShocks] = useState<Record<ShockKey, boolean>>({ typhoon: false, viral: false, fire: false });
+  const [effectRevealed, setEffectRevealed] = useState(false);
 
   const data = useMemo(() => makeFerry({ shocks, policyMonth: POLICY_MONTH }), [shocks]);
 
@@ -97,6 +98,10 @@ function PrePostLesson() {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
 
+  useEffect(() => {
+    if (step !== 3) setEffectRevealed(false);
+  }, [step, counterfactual, startMonth, window_, shocks]);
+
   const hints: string[] = [];
   if (step === 2 && fake)
     hints.push(
@@ -123,7 +128,7 @@ function PrePostLesson() {
       "实际使用的窗口（月）": effWindow,
       事前均值: fmt(preMean, 0),
       事后均值: fmt(postMean, 0),
-      "估计效应（人次/月）": fmt(estimate, 0),
+      "估计效应（人次/月）": step === 3 && !effectRevealed ? "未揭示（等待用户先猜）" : fmt(estimate, 0),
       "事前每月趋势（人次）": fmt(line.b, 1),
       打开的干扰: [shocks.typhoon && "台风", shocks.viral && "短视频", shocks.fire && "火灾"].filter(Boolean).join("、") || "无",
     },
@@ -316,7 +321,11 @@ function PrePostLesson() {
                   <Tile label="事前均值" value={preMean} unit="人次" tone="teal" />
                   <Tile label="事后均值" value={postMean} unit="人次" tone="copper" />
                   <Tile label="对照线预测" value={counterfactual === "水平" ? preMean : trendPred} unit="人次" />
-                  <Tile label="估计效应" value={estimate} unit="人次/月" tone="copper" />
+                  {effectRevealed ? (
+                    <Tile label="估计效应" value={estimate} unit="人次/月" tone="copper" />
+                  ) : (
+                    <Tile label="估计效应" value="先猜后显示" unit="" />
+                  )}
                 </div>
               </Panel>
               <GuessBox
@@ -324,6 +333,7 @@ function PrePostLesson() {
                 unit="人次/月"
                 truth={estimate}
                 tolerance={120}
+                onReveal={() => setEffectRevealed(true)}
                 onResolve={(g, ok) => track("算出效应", "先猜再对照", `猜 ${fmt(g, 0)}，${ok ? "在容差内" : "偏了"}`)}
               />
             </>

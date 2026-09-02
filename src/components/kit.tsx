@@ -203,12 +203,14 @@ export function GuessBox({
   truth,
   tolerance,
   onResolve,
+  onReveal,
 }: {
   question: string;
   unit: string;
   truth: number;
   tolerance: number;
   onResolve?: (guess: number, ok: boolean) => void;
+  onReveal?: () => void;
 }) {
   const [guess, setGuess] = useState("");
   const [shown, setShown] = useState(false);
@@ -231,6 +233,7 @@ export function GuessBox({
           disabled={guess === "" || Number.isNaN(g)}
           onClick={() => {
             setShown(true);
+            onReveal?.();
             onResolve?.(g, ok);
           }}
           className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-40"
