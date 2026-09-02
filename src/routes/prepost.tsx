@@ -60,8 +60,15 @@ function PrePostLesson() {
 
   const data = useMemo(() => makeFerry({ shocks, policyMonth: POLICY_MONTH }), [shocks]);
 
-  const pre = data.filter((d) => d.t < startMonth && d.t >= startMonth - window_);
-  const post = data.filter((d) => d.t >= startMonth && d.t < startMonth + window_);
+  // 窗口要对称，而且安慰剂窗口不能跨过真正的免票月，否则「假的开始月份」也会捡到真效应
+  let effWindow = Math.min(window_, startMonth, data.length - startMonth);
+  if (startMonth < POLICY_MONTH) effWindow = Math.min(effWindow, POLICY_MONTH - startMonth);
+  else if (startMonth > POLICY_MONTH) effWindow = Math.min(effWindow, startMonth - POLICY_MONTH);
+  effWindow = Math.max(3, effWindow);
+  const trimmed = effWindow < window_;
+
+  const pre = data.filter((d) => d.t < startMonth && d.t >= startMonth - effWindow);
+  const post = data.filter((d) => d.t >= startMonth && d.t < startMonth + effWindow);
   const preMean = mean(pre.map((d) => d.visits));
   const postMean = mean(post.map((d) => d.visits));
 
@@ -75,12 +82,13 @@ function PrePostLesson() {
     t: d.t,
     客流: d.visits,
     对照线:
-      d.t >= startMonth - window_ && d.t < startMonth + window_
+      d.t >= startMonth - effWindow && d.t < startMonth + effWindow
         ? counterfactual === "水平"
           ? preMean
           : line.a + line.b * d.t
         : null,
   }));
+
 
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
