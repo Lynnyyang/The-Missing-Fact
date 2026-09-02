@@ -57,14 +57,14 @@ export type FerryPoint = {
 export type ShockKey = "typhoon" | "viral" | "fire";
 
 export function makeFerry(opts: { shocks: Record<ShockKey, boolean>; policyMonth: number }): FerryPoint[] {
-  const rand = rng(77003);
   const out: FerryPoint[] = [];
   for (let t = 0; t < 84; t++) {
     const year = 2015 + Math.floor(t / 12);
     const month = (t % 12) + 1;
+    // 教学用：曲线做成平滑的，不加随机抖动，便于看清对照线
     const season = 380 * Math.sin(((month - 3) / 12) * 2 * Math.PI);
-    const festival = month === 9 ? 240 : 0; // 渔获节，每年都有
-    let v = 4200 + 9 * t + season + festival + normal(rand, 0, 90);
+    const festival = 150 * Math.exp(-Math.pow(month - 9, 2) / 2); // 渔获节前后的平滑隆起
+    let v = 4200 + 9 * t + season + festival;
     if (t >= opts.policyMonth) v += 420;
     if (opts.shocks.typhoon && year === 2018 && month === 9) v -= 900;
     if (opts.shocks.viral && ((year === 2019 && month >= 5 && month <= 8) || (year === 2019 && month === 4))) v += 700;
