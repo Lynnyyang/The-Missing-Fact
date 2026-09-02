@@ -491,26 +491,58 @@ function RctLesson() {
             </div>
           </Panel>
 
-          <Panel title="加两种现实麻烦">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Toggle
-                label="不依从：抽中的人有些没去上课"
-                checked={noncompliance}
-                hint="按分组算出来的是意向处理效应。"
-                onChange={(v) => {
-                  setNoncompliance(v);
-                  track("算出效应", "不依从", v ? "开" : "关");
-                }}
-              />
-              <Toggle
-                label="缺考：对照组里低能力学生更容易缺考"
-                checked={attrition}
-                hint="对照被拧高，估计偏小。"
-                onChange={(v) => {
-                  setAttrition(v);
-                  track("算出效应", "缺考", v ? "开" : "关");
-                }}
-              />
+          <Panel title="加两种现实麻烦" hint="打开开关后还能拖比例，看这个差被拉走多少。">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-3">
+                <Toggle
+                  label="不依从：抽中的人有些没去上课"
+                  checked={noncompliance}
+                  hint="按分组算出来的是意向处理效应。"
+                  onChange={(v) => {
+                    setNoncompliance(v);
+                    track("算出效应", "不依从", v ? "开" : "关");
+                  }}
+                />
+                {noncompliance && (
+                  <Dial
+                    label="抽中却没去上课的比例"
+                    value={noncompRate}
+                    min={0}
+                    max={0.6}
+                    step={0.02}
+                    onChange={(v) => {
+                      setNoncompRate(v);
+                      track("算出效应", "不依从比例", `${Math.round(v * 100)}%`);
+                    }}
+                    hint="比例越大，按分组算出来的差越被稀释。"
+                  />
+                )}
+              </div>
+              <div className="space-y-3">
+                <Toggle
+                  label="缺考：对照组里低能力学生更容易缺考"
+                  checked={attrition}
+                  hint="对照被拧高，估计偏小。"
+                  onChange={(v) => {
+                    setAttrition(v);
+                    track("算出效应", "缺考", v ? "开" : "关");
+                  }}
+                />
+                {attrition && (
+                  <Dial
+                    label="低能力学生缺考的比例"
+                    value={attritionRate}
+                    min={0}
+                    max={0.95}
+                    step={0.05}
+                    onChange={(v) => {
+                      setAttritionRate(v);
+                      track("算出效应", "缺考比例", `${Math.round(v * 100)}%`);
+                    }}
+                    hint="拖大它，对照组剩下的人越来越强。"
+                  />
+                )}
+              </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="实验班期末均值" value={mean(T.map((r) => r.y))} tone="copper" />
