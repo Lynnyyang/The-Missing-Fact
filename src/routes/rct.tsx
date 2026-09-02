@@ -324,18 +324,18 @@ function RctLesson() {
                 unit=" 人"
                 onChange={(v) => {
                   setSeats(v);
-                  track("公开抽签", "实验班名额", v);
+                  track("随机抽签", "实验班名额", v);
                 }}
                 hint="名额越少，两组人数越不平衡，置信区间越宽。"
               />
-              <div className="flex items-end gap-2">
+              <div className="flex flex-wrap items-end gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    setMode("抽签");
+                    setBias(0);
                     setSeed((s) => s + 1);
                     setSwaps({});
-                    track("公开抽签", "再抽一次", `第 ${seed + 1} 次`);
+                    track("随机抽签", "再抽一次", `第 ${seed + 1} 次`);
                   }}
                   className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
                 >
@@ -345,7 +345,7 @@ function RctLesson() {
                   type="button"
                   onClick={() => {
                     setSwaps({});
-                    track("公开抽签", "撤销手动换组", "全部撤销");
+                    track("随机抽签", "撤销手动换组", "全部撤销");
                   }}
                   className="rounded-md border border-border px-3 py-2 text-xs"
                 >
@@ -363,8 +363,100 @@ function RctLesson() {
               />
             </div>
           </Panel>
+
+          <Panel title="连着抽很多次" hint="一次抽签会偏，很多次抽签的差围着 0 转，这才是随机抽签的承诺。">
+            <div className="flex flex-wrap items-center gap-2">
+              {[20, 100, 500].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => runDraws(n)}
+                  className="rounded-md border border-border px-3 py-2 text-xs hover:border-copper"
+                >
+                  连抽 {n} 次
+                </button>
+              ))}
+              {draws.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraws([]);
+                    track("随机抽签", "清空连抽结果", "清空");
+                  }}
+                  className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground"
+                >
+                  清空
+                </button>
+              )}
+            </div>
+            {draws.length > 0 ? (
+              <>
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <Tile label="抽签次数" value={draws.length} unit=" 次" />
+                  <Tile label="抽签前成绩差的平均" value={mean(draws)} tone="teal" />
+                  <Tile label="最偏的一次" value={draws.reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a), 0)} tone="rose" />
+                  <Tile
+                    label="差超过 2 分的次数"
+                    value={draws.filter((d) => Math.abs(d) > 2).length}
+                    unit=" 次"
+                    tone="copper"
+                  />
+                </div>
+                <div className="mt-4 h-52">
+                  <ResponsiveContainer>
+                    <BarChart data={drawHist}>
+                      <CartesianGrid stroke="var(--border)" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                      <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                      <Tooltip
+                        contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }}
+                      />
+                      <Bar dataKey="v" radius={3} fill="var(--teal)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <Callout tone={Math.abs(mean(draws)) < 0.6 ? "copper" : "rose"}>
+                  {Math.abs(mean(draws)) < 0.6
+                    ? "很多次抽签的抽签前成绩差平均下来贴着 0：单次抽签可以运气不好，但没有系统偏向。"
+                    : "平均还明显偏离 0，说明现在的招生偏向不是纯随机，先把上一页的偏向拖到 0。"}
+                </Callout>
+              </>
+            ) : (
+              <p className="mt-3 text-xs text-muted-foreground">按一次上面的按钮，就会把每次抽签的「抽签前成绩差」画成分布。</p>
+            )}
+          </Panel>
+
           <Panel title="点学生换组" hint="点一行就把这名学生挪到另一组，看三个差怎么被你带偏。">
-            <div className="max-h-72 overflow-y-auto rounded-lg border border-border">
+            <div className="flex flex-wrap gap-2">
+              {(["学习能力", "家庭收入", "入学前成绩", "分组"] as SortKey[]).map((k) => (
+                <Chip
+                  key={k}
+                  active={sortKey === k}
+                  onClick={() => {
+                    setSortKey(k);
+                    track("随机抽签", "名单排序", k);
+                  }}
+                >
+                  按{k}排
+                </Chip>
+              ))}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(["全部", "实验班", "对照"] as const).map((f) => (
+                <Chip
+                  key={f}
+                  tone="teal"
+                  active={tableFilter === f}
+                  onClick={() => {
+                    setTableFilter(f);
+                    track("随机抽签", "名单筛选", f);
+                  }}
+                >
+                  只看{f}
+                </Chip>
+              ))}
+            </div>
+            <div className="mt-3 max-h-72 overflow-y-auto rounded-lg border border-border">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-card text-muted-foreground">
                   <tr>
@@ -376,16 +468,21 @@ function RctLesson() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.slice(0, 40).map((r) => (
+                  {sortedRows.slice(0, 40).map((r) => (
                     <tr
                       key={r.s.id}
                       onClick={() => {
                         setSwaps((p) => ({ ...p, [r.s.id]: !r.treated }));
-                        track("公开抽签", "点学生换组", `${r.s.name} → ${!r.treated ? "实验班" : "对照"}`);
+                        track("随机抽签", "点学生换组", `${r.s.name} → ${!r.treated ? "实验班" : "对照"}`);
                       }}
-                      className="cursor-pointer border-t border-border hover:bg-accent"
+                      className={`cursor-pointer border-t border-border hover:bg-accent ${
+                        swaps[r.s.id] !== undefined ? "bg-accent/60" : ""
+                      }`}
                     >
-                      <td className="px-2 py-1.5">{r.s.name}</td>
+                      <td className="px-2 py-1.5">
+                        {r.s.name}
+                        {swaps[r.s.id] !== undefined && <span className="ml-2 text-[10px] text-copper">手动</span>}
+                      </td>
                       <td className="num px-2 py-1.5 text-right">{fmt(r.s.ability, 1)}</td>
                       <td className="num px-2 py-1.5 text-right">{fmt(r.s.income, 1)}</td>
                       <td className="num px-2 py-1.5 text-right">{fmt(r.s.pre, 1)}</td>
