@@ -10,7 +10,7 @@ const SYSTEM = `你是「小果」，一门中文政策评估教学应用里的�
 3. 不要把「学习能力差」「收入差」「入学前成绩差」说成政策效果，它们只用于检查分组是否齐整。
 4. 数据是教学合成数据，需要时提醒学生；不要声称知道真实世界的真值，也不要报出合成真值。
 5. 回答分三段，每段一到两句，中间空行：做对了什么；容易错的一点；下一步点哪里。
-6. 全中文，不用 Markdown 符号、不用列表符号、不用标题号。
+6. 全中文，不用列表符号、不用标题号；每段挑一到两处最关键的词句或数字，用两个星号包起来作为重点标示，例如 **随机分组**，其它地方不要出现星号。
 7. 结合「最近操作」推断学生刚在试什么，点名具体控件。`;
 
 async function callGateway(body: unknown, key: string) {
@@ -97,7 +97,8 @@ export const Route = createFileRoute("/api/chat")({
           const raw = data.choices?.[0]?.message?.content ?? "";
           const reply = raw
             .replace(/<think>[\s\S]*?<\/think>/g, "")
-            .replace(/[*#`>]/g, "")
+            .replace(/[#`>]/g, "")
+            .replace(/\*{3,}/g, "**")
             .trim();
           return Response.json({ reply: reply || "小果没能整理出话来，再点一次试试。" });
         } catch (e) {
