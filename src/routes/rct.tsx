@@ -529,10 +529,24 @@ function RctLesson() {
                           className="absolute top-1/2 h-px bg-border"
                           style={{
                             left: pos(Math.min(seen, hidden)),
-                            width: `${(Math.abs(r.s.y1 - r.s.y0) / 60) * 100}%`,
+                            width: `${(Math.abs(y1eff - y0eff) / 60) * 100}%`,
                           }}
                         />
                       )}
+                      {gain > 0 && !r.treated && (
+                        <>
+                          <span
+                            title={`没有溢出时：${fmt(r.s.y0, 1)} 分`}
+                            className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-muted-foreground/60"
+                            style={{ left: pos(r.s.y0) }}
+                          />
+                          <span
+                            className="absolute top-1/2 h-px bg-teal/50"
+                            style={{ left: pos(r.s.y0), width: `${(gain / 60) * 100}%` }}
+                          />
+                        </>
+                      )}
+
                       <span
                         title={`观测到：${fmt(seen, 1)} 分`}
                         className={
