@@ -24,7 +24,7 @@ export const Route = createFileRoute("/rct")({
       { title: "青藤抽签 · 随机分组｜寻找缺失的事实" },
       {
         name: "description",
-        content: "拖招生偏向、改名额、连抽多次、点学生换组、调不依从与缺考比例，亲手看随机抽签怎么造出可信的对照组。",
+        content: "拖招生偏向、改名额、连抽多次、调不依从与缺考比例，亲手看随机抽签怎么造出可信的对照组。",
       },
       { property: "og:title", content: "青藤抽签 · 随机分组" },
       { property: "og:description", content: "按成绩录取的期末差有多脏？随机抽签之后又剩下什么？" },
@@ -53,7 +53,6 @@ function RctLesson() {
   const [bias, setBias] = useState(1);
   const [seats, setSeats] = useState(80);
   const [seed, setSeed] = useState(1);
-  const [swaps, setSwaps] = useState<Record<number, boolean>>({});
   const [spill, setSpill] = useState(0);
   const [noncompliance, setNoncompliance] = useState(false);
   const [noncompRate, setNoncompRate] = useState(0.18);
@@ -81,8 +80,8 @@ function RctLesson() {
   }, [students, bias, seats, seed]);
 
   const assigned = useMemo(
-    () => students.map((s) => ({ s, treated: swaps[s.id] ?? drawSet.has(s.id) })),
-    [students, drawSet, swaps],
+    () => students.map((s) => ({ s, treated: drawSet.has(s.id) })),
+    [students, drawSet],
   );
 
   const rows = useMemo(() => {
