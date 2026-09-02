@@ -43,7 +43,6 @@ const STEPS: Step[] = [
 ];
 
 type Mode = "抽签" | "按成绩";
-type SortKey = "学习能力" | "家庭收入" | "入学前成绩" | "分组";
 
 function RctLesson() {
   const { visit, track, profile, setNote } = useApp();
@@ -62,8 +61,6 @@ function RctLesson() {
   const [opened, setOpened] = useState<number[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [checks, setChecks] = useState<string[]>([]);
-  const [sortKey, setSortKey] = useState<SortKey>("入学前成绩");
-  const [tableFilter, setTableFilter] = useState<"全部" | "实验班" | "对照">("全部");
   const [draws, setDraws] = useState<number[]>([]);
 
   const students = useMemo(() => makeStudents(), []);
@@ -138,23 +135,6 @@ function RctLesson() {
     });
     return counts.map((c, i) => ({ name: fmt(lo + w * i, 1), v: c }));
   }, [draws]);
-
-  const sortedRows = useMemo(() => {
-    const list = rows.filter((r) =>
-      tableFilter === "全部" ? true : tableFilter === "实验班" ? r.treated : !r.treated,
-    );
-    const key = (r: (typeof rows)[number]) =>
-      sortKey === "学习能力"
-        ? -r.s.ability
-        : sortKey === "家庭收入"
-          ? -r.s.income
-          : sortKey === "入学前成绩"
-            ? -r.s.pre
-            : r.treated
-              ? -1
-              : 1;
-    return [...list].sort((a, b) => key(a) - key(b));
-  }, [rows, sortKey, tableFilter]);
 
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
