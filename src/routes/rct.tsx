@@ -349,8 +349,24 @@ function RctLesson() {
             </div>
           </Panel>
 
-          <Panel title="连着抽很多次" hint="一次抽签会偏，很多次抽签的差围着 0 转，这才是随机抽签的承诺。">
+          <Panel title="连着抽很多次" hint="先选这很多次用哪种办法分人，再连抽，看每次的「抽签前成绩差」散成什么形状。">
             <div className="flex flex-wrap items-center gap-2">
+              {(["抽签", "按成绩"] as const).map((m) => (
+                <Chip
+                  key={m}
+                  active={drawMode === m}
+                  tone={m === "抽签" ? "teal" : "rose"}
+                  onClick={() => {
+                    setDrawMode(m);
+                    track("随机抽签", "连抽用哪种办法", m === "抽签" ? "随机抽签" : "按成绩录取");
+                    if (draws.length) runDraws(draws.length, m);
+                  }}
+                >
+                  {m === "抽签" ? "随机抽签" : "按成绩录取"}
+                </Chip>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               {[20, 100].map((n) => (
                 <button
                   key={n}
@@ -391,25 +407,33 @@ function RctLesson() {
                   <ResponsiveContainer>
                     <BarChart data={drawHist}>
                       <CartesianGrid stroke="var(--border)" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                      <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                        label={{ value: "抽签前成绩差（分）", position: "insideBottom", offset: -2, fontSize: 10, fill: "var(--muted-foreground)" }}
+                      />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
                       <Tooltip
                         contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }}
+                        formatter={(v: number) => [`${v} 次`, "落在这一格"]}
                       />
-                      <Bar dataKey="v" radius={3} fill="var(--teal)" />
+                      <Bar dataKey="v" radius={3} fill={drawMode === "抽签" ? "var(--teal)" : "var(--rose)"} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <Callout tone={Math.abs(mean(draws)) < 0.6 ? "copper" : "rose"}>
-                  {Math.abs(mean(draws)) < 0.6
-                    ? "很多次抽签的抽签前成绩差平均下来贴着 0：单次抽签可以运气不好，但没有系统偏向。"
-                    : "平均还明显偏离 0，说明现在的招生偏向不是纯随机，先把上一页的偏向拖到 0。"}
+                <Callout tone={drawMode === "抽签" && Math.abs(mean(draws)) < 0.6 ? "copper" : "rose"}>
+                  {drawMode === "抽签"
+                    ? Math.abs(mean(draws)) < 0.6
+                      ? "随机抽签这很多次的差平均下来贴着 0，形状左右对称：单次可以运气不好，但没有系统偏向。"
+                      : "平均还偏离 0，再多抽几次看看它会不会收回来。"
+                    : "按成绩录取时，每一次的差都稳稳落在同一边、离 0 很远：这不是运气，是办法本身造出来的偏差。"}
                 </Callout>
               </>
             ) : (
               <p className="mt-3 text-xs text-muted-foreground">按一次上面的按钮，就会把每次抽签的「抽签前成绩差」画成分布。</p>
             )}
           </Panel>
+
         </>
       )}
 
