@@ -465,7 +465,18 @@ function RctLesson() {
             {!revealed && (
               <p className="mt-2 text-xs text-muted-foreground">差和置信区间要等你在下面猜过一次，才会显示出来。</p>
             )}
+            {(noncompliance || attrition) && (
+              <div className="mt-3">
+                <Callout tone="rose">
+                  打开这两种麻烦之后，上面那个差就不再等于政策效应了。
+                  {noncompliance && "抽中却没去上课的人还留在实验班一栏里，算出来的是「被分到实验班」的效应，而不是「真的上了课」的效应。"}
+                  {attrition && "对照组里低能力学生缺考被剔除，对照均值被拧高，两组之差不再只反映实验班的作用。"}
+                  公式没变，变的是分组之外还有别的东西在影响这个差。
+                </Callout>
+              </div>
+            )}
           </Panel>
+
           <GuessBox
             question="先猜：实验班让期末科学测验平均高了多少分？"
             unit="分"
