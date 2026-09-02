@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
-import { Callout, Chip, Dial, GuessBox, NoteBox, Panel, Quiz, Tile } from "@/components/kit";
+import { Callout, Chip, Dial, GuessBox, Panel, Quiz, Tile } from "@/components/kit";
 import { AutoReview } from "@/components/AutoReview";
 import { SC_TREAT_YEAR, SC_YEARS, makeCities } from "@/lib/synth";
 import { fitSynth, fmt, rmse } from "@/lib/stats";
@@ -44,7 +44,7 @@ const STEPS: Step[] = [
 const PRE_LEN = SC_YEARS.indexOf(SC_TREAT_YEAR);
 
 function SynthLesson() {
-  const { visit, track, profile, setNote } = useApp();
+  const { visit, track, profile } = useApp();
   const [step, setStep] = useState(0);
   const cities = useMemo(() => makeCities(), []);
   const target = cities.find((c) => c.key === "lan")!;
@@ -318,9 +318,6 @@ function SynthLesson() {
             answer={0}
             onAnswer={(ok) => track("小结", "选择题", ok ? "答对" : "答错")}
           />
-          <Panel title="写下你的结论">
-            <NoteBox value={profile.notes["synth"] ?? ""} onChange={(v) => setNote("synth", v)} />
-          </Panel>
           <Callout>
             权重非负、加总为 1，所以合成岚城只能落在篮子里的城市之间。篮子外的情形不能硬外推。数据为教学合成。
           </Callout>

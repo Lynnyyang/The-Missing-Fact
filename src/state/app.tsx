@@ -28,11 +28,10 @@ export type Snapshot = {
 export type Profile = {
   xp: number;
   visited: string[];
-  notes: Record<string, string>;
   certifiedAt?: number;
 };
 
-const emptyProfile: Profile = { xp: 0, visited: [], notes: {} };
+const emptyProfile: Profile = { xp: 0, visited: [] };
 
 /** 用户自备的大模型连接信息（OpenAI 兼容接口，如通义千问 Qwen） */
 export type LlmSettings = { baseUrl: string; model: string; apiKey: string };
@@ -71,7 +70,6 @@ type Ctx = {
   logout: () => void;
   clearProgress: () => void;
   visit: (id: string, xp?: number) => void;
-  setNote: (id: string, text: string) => void;
   actions: Action[];
   track: (page: string, control: string, value: string | number | boolean) => void;
   snapshot: Snapshot | null;
@@ -153,18 +151,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
-  const setNote = useCallback(
-    (id: string, text: string) => {
-      if (!user) return;
-      setProfile((prev) => {
-        const next = { ...prev, notes: { ...prev.notes, [id]: text } };
-        write(K_PROFILE(user), next);
-        return next;
-      });
-    },
-    [user],
-  );
-
   const track = useCallback((page: string, control: string, value: string | number | boolean) => {
     setActions((prev) =>
       [...prev, { at: Date.now(), page, control, value: String(value) }].slice(-60),
@@ -192,7 +178,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       logout,
       clearProgress,
       visit,
-      setNote,
       actions,
       track,
       snapshot,
@@ -202,7 +187,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       llm,
       setLlm,
     }),
-    [ready, user, users, profile, login, logout, clearProgress, visit, setNote, actions, track, snapshot, companionWidth, setCompanionWidth, llm, setLlm],
+    [ready, user, users, profile, login, logout, clearProgress, visit, actions, track, snapshot, companionWidth, setCompanionWidth, llm, setLlm],
   );
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

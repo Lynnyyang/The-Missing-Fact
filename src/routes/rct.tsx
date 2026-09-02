@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
-import { Callout, Chip, Dial, NoteBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
+import { Callout, Chip, Dial, Panel, Quiz, Tile, Toggle } from "@/components/kit";
 import { AutoReview } from "@/components/AutoReview";
 import { makeStudents, type Student } from "@/lib/synth";
 import { diffMeans, fmt, mean, rng } from "@/lib/stats";
@@ -45,7 +45,7 @@ const STEPS: Step[] = [
 type Mode = "抽签" | "按成绩";
 
 function RctLesson() {
-  const { visit, track, profile, setNote } = useApp();
+  const { visit, track, profile } = useApp();
   const [step, setStep] = useState(0);
 
   // 0 = 完全随机抽签，1 = 完全按入学前成绩录取
@@ -746,9 +746,6 @@ function RctLesson() {
             answer={0}
             onAnswer={(ok) => track("小结", "选择题", ok ? "答对" : "答错")}
           />
-          <Panel title="用两句话写下你的结论" hint="小果会照着你写的用词点评。">
-            <NoteBox value={profile.notes["rct"] ?? ""} onChange={(v) => setNote("rct", v)} />
-          </Panel>
           <Callout>
             随机化发生在申请者里，所以这个数字说的是申请实验班的这批人。换一群人、换一所学校，不能直接搬。
           </Callout>
