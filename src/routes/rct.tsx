@@ -502,8 +502,13 @@ function RctLesson() {
               {rows.slice(0, showN).map((r) => {
                 const open = opened.includes(r.s.id) || show === "两格";
                 const pos = (v: number) => `${Math.min(98, Math.max(0, ((v - 40) / 60) * 100))}%`;
-                const seen = r.treated ? r.s.y1 : r.s.y0;
-                const hidden = r.treated ? r.s.y0 : r.s.y1;
+                // 溢出：谁在对照组，谁就沾到好处，所以「没进班」那一格会整体右移
+                const gain = spill * 7.4;
+                const y0eff = r.s.y0 + gain;
+                const y1eff = r.s.y1;
+                const seen = r.treated ? y1eff : y0eff;
+                const hidden = r.treated ? y0eff : y1eff;
+
                 return (
                   <button
                     key={r.s.id}
@@ -524,10 +529,24 @@ function RctLesson() {
                           className="absolute top-1/2 h-px bg-border"
                           style={{
                             left: pos(Math.min(seen, hidden)),
-                            width: `${(Math.abs(r.s.y1 - r.s.y0) / 60) * 100}%`,
+                            width: `${(Math.abs(y1eff - y0eff) / 60) * 100}%`,
                           }}
                         />
                       )}
+                      {gain > 0 && !r.treated && (
+                        <>
+                          <span
+                            title={`没有溢出时：${fmt(r.s.y0, 1)} 分`}
+                            className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-muted-foreground/60"
+                            style={{ left: pos(r.s.y0) }}
+                          />
+                          <span
+                            className="absolute top-1/2 h-px bg-teal/50"
+                            style={{ left: pos(r.s.y0), width: `${(gain / 60) * 100}%` }}
+                          />
+                        </>
+                      )}
+
                       <span
                         title={`观测到：${fmt(seen, 1)} 分`}
                         className={
@@ -566,17 +585,24 @@ function RctLesson() {
                 label={show === "两格" ? "偷看：每个人自己的差的平均" : "偷看后才显示"}
                 value={
                   show === "两格"
-                    ? fmt(mean(rows.slice(0, showN).map((r) => r.s.y1 - r.s.y0)))
+                    ? fmt(mean(rows.slice(0, showN).map((r) => r.s.y1 - (r.s.y0 + spill * 7.4))))
                     : "先切到两格"
                 }
                 tone="rose"
               />
             </div>
-            <div className="mt-3">
+            <div className="mt-3 space-y-2">
+              {spill > 0 && (
+                <Callout tone="rose">
+                  溢出强度 {Math.round(spill * 100)}%：上图里对照同学的点整体往右挪了 {fmt(spill * 7.4, 1)} 分，空心小圈是他们没沾到好处时的位置。
+                  实验班那一行的问号格也跟着右移——因为他们要是没进班，也会被同学带一把。两组之差因此被压小。
+                </Callout>
+              )}
               <Callout>
                 问号那一格就是缺失的事实。随机分组的作用不是把问号填上，而是让对照组的平均值能替处理组的问号说话。
               </Callout>
             </div>
+
           </Panel>
 
           <Panel title="溢出：对照组也沾到好处" hint="拖大它，看两组之差怎么被压小。">
