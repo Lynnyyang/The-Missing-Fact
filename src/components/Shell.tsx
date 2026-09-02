@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Companion } from "./Companion";
+import { LlmSettingsModal } from "./LlmSettings";
 import { useApp, rankOf } from "@/state/app";
 import { drawCertificate, downloadCanvas } from "@/lib/certificate";
 import { cn } from "@/lib/utils";
@@ -8,8 +9,9 @@ import { cn } from "@/lib/utils";
 export const LESSON_FINALS = ["rct-6", "prepost-6", "did-6", "synth-6"];
 
 export function TopBar() {
-  const { user, users, profile, login, logout, clearProgress } = useApp();
+  const { user, users, profile, login, clearProgress, llm } = useApp();
   const [showCert, setShowCert] = useState(false);
+  const [showLlm, setShowLlm] = useState(false);
   const done = LESSON_FINALS.every((k) => profile.visited.includes(k));
 
   return (
