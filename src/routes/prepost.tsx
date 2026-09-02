@@ -321,7 +321,11 @@ function PrePostLesson() {
                   <Tile label="事前均值" value={preMean} unit="人次" tone="teal" />
                   <Tile label="事后均值" value={postMean} unit="人次" tone="copper" />
                   <Tile label="对照线预测" value={counterfactual === "水平" ? preMean : trendPred} unit="人次" />
-                  <Tile label="估计效应" value={estimate} unit="人次/月" tone="copper" />
+                  {effectRevealed ? (
+                    <Tile label="估计效应" value={estimate} unit="人次/月" tone="copper" />
+                  ) : (
+                    <Tile label="估计效应" value="先猜后显示" unit="" />
+                  )}
                 </div>
               </Panel>
               <GuessBox
@@ -329,6 +333,7 @@ function PrePostLesson() {
                 unit="人次/月"
                 truth={estimate}
                 tolerance={120}
+                onReveal={() => setEffectRevealed(true)}
                 onResolve={(g, ok) => track("算出效应", "先猜再对照", `猜 ${fmt(g, 0)}，${ok ? "在容差内" : "偏了"}`)}
               />
             </>
