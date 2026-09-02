@@ -14,7 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
-import { Callout, Chip, GuessBox, NoteBox, Panel, Quiz, Tile } from "@/components/kit";
+import { Callout, Chip, GuessBox, Panel, Quiz, Tile } from "@/components/kit";
 import { AutoReview } from "@/components/AutoReview";
 import { DID_YEARS, OPEN_YEAR, makeBlocks } from "@/lib/synth";
 import { did, fitLine, fmt, mean } from "@/lib/stats";
@@ -47,7 +47,7 @@ const STEPS: Step[] = [
 const PRE = 2017;
 
 function DidLesson() {
-  const { visit, track, profile, setNote } = useApp();
+  const { visit, track, profile } = useApp();
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<string[]>(["hx", "nw"]);
   const [fakeYear, setFakeYear] = useState(OPEN_YEAR);

@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
-import { Callout, Chip, Dial, GuessBox, NoteBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
+import { Callout, Chip, Dial, GuessBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
 import { AutoReview } from "@/components/AutoReview";
 import { makeFerry, POLICY_MONTH, type ShockKey } from "@/lib/synth";
 import { fitLine, fmt, mean } from "@/lib/stats";
@@ -49,7 +49,7 @@ const EVENTS = [
 ] as const;
 
 function PrePostLesson() {
-  const { visit, track, profile, setNote } = useApp();
+  const { visit, track, profile } = useApp();
   const [step, setStep] = useState(0);
   const [why, setWhy] = useState<string[]>([]);
   const [clicked, setClicked] = useState<string[]>([]);
