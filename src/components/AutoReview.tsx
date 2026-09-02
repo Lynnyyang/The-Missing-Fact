@@ -6,7 +6,7 @@ import { Panel } from "@/components/kit";
  * 小结页自动点评：进入本页时把界面状态与本课操作记录自动发给小果，
  * 学生不需要手动提交。
  */
-export function AutoReview({ lesson }: { lesson: string }) {
+export function AutoReview() {
   const { snapshot, actions } = useApp();
   const [reply, setReply] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,9 +24,7 @@ export function AutoReview({ lesson }: { lesson: string }) {
           mode: "review",
           messages: [],
           snapshot,
-          actions: actions
-            .filter((a) => a.lesson === lesson || !a.lesson)
-            .map((a) => ({ page: a.page, control: a.control, value: a.value })),
+          actions: actions.map((a) => ({ page: a.page, control: a.control, value: a.value })),
         }),
       });
       const data = (await res.json()) as { reply?: string; error?: string };
@@ -37,7 +35,7 @@ export function AutoReview({ lesson }: { lesson: string }) {
     } finally {
       setBusy(false);
     }
-  }, [snapshot, actions, lesson]);
+  }, [snapshot, actions]);
 
   useEffect(() => {
     if (fired.current || !snapshot) return;
@@ -45,7 +43,7 @@ export function AutoReview({ lesson }: { lesson: string }) {
     void ask();
   }, [snapshot, ask]);
 
-  const count = actions.filter((a) => a.lesson === lesson || !a.lesson).length;
+  const count = actions.length;
 
   return (
     <Panel

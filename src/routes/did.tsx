@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
 import { Callout, Chip, GuessBox, NoteBox, Panel, Quiz, Tile } from "@/components/kit";
+import { AutoReview } from "@/components/AutoReview";
 import { DID_YEARS, OPEN_YEAR, makeBlocks } from "@/lib/synth";
 import { did, fitLine, fmt, mean } from "@/lib/stats";
 import { useApp, useCompanionSnapshot } from "@/state/app";
@@ -317,6 +318,7 @@ function DidLesson() {
 
       {step === 5 && (
         <>
+          <AutoReview />
           <Quiz
             question="这个双重差分估计说的是谁的效应？"
             options={[

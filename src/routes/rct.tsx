@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
 import { Callout, Chip, Dial, GuessBox, NoteBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
+import { AutoReview } from "@/components/AutoReview";
 import { makeStudents, type Student } from "@/lib/synth";
 import { diffMeans, fmt, mean, rng } from "@/lib/stats";
 import { useApp, useCompanionSnapshot } from "@/state/app";
@@ -467,6 +468,7 @@ function RctLesson() {
 
       {step === 5 && (
         <>
+          <AutoReview />
           <Quiz
             question="公开抽签让这个比较可信，靠的是什么？"
             options={[

@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { LessonShell, type Step } from "@/components/Shell";
 import { Callout, Chip, Dial, GuessBox, NoteBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
+import { AutoReview } from "@/components/AutoReview";
 import { makeFerry, POLICY_MONTH, type ShockKey } from "@/lib/synth";
 import { fitLine, fmt, mean } from "@/lib/stats";
 import { useApp, useCompanionSnapshot } from "@/state/app";
@@ -326,6 +327,7 @@ function PrePostLesson() {
 
       {step === 5 && (
         <>
+          <AutoReview />
           <Quiz
             question="什么时候应该放弃事前事后，换成双重差分？"
             options={[
