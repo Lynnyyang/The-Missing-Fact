@@ -59,8 +59,6 @@ function RctLesson() {
   const [opened, setOpened] = useState<number[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [checks, setChecks] = useState<string[]>([]);
-  const [revealed, setRevealed] = useState(false);
-
 
   const students = useMemo(() => makeStudents(), []);
 
