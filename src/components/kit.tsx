@@ -307,15 +307,3 @@ export function Callout({ children, tone = "copper" }: { children: ReactNode; to
     </div>
   );
 }
-
-export function NoteBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      rows={3}
-      placeholder="用两句话写下：比较的是谁？对照是怎么来的？"
-      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm leading-relaxed outline-none focus:border-copper"
-    />
-  );
-}
