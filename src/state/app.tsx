@@ -78,6 +78,8 @@ type Ctx = {
   setSnapshot: (s: Snapshot | null) => void;
   companionWidth: number;
   setCompanionWidth: (w: number) => void;
+  llm: LlmSettings;
+  setLlm: (s: LlmSettings) => void;
 };
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -90,11 +92,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [actions, setActions] = useState<Action[]>([]);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [companionWidth, setWidthState] = useState(400);
+  const [llm, setLlmState] = useState<LlmSettings>(emptyLlm);
 
   useEffect(() => {
     const u = read<string | null>(K_USER, null);
     setUsers(read<string[]>(K_INDEX, []));
     setWidthState(read<number>(K_WIDTH, 400));
+    setLlmState(read<LlmSettings>(K_LLM, emptyLlm));
     if (u) {
       setUser(u);
       setProfile(read<Profile>(K_PROFILE(u), emptyProfile));
@@ -173,6 +177,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     write(K_WIDTH, clamped);
   }, []);
 
+  const setLlm = useCallback((s: LlmSettings) => {
+    setLlmState(s);
+    write(K_LLM, s);
+  }, []);
+
   const value = useMemo(
     () => ({
       ready,
@@ -190,8 +199,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSnapshot,
       companionWidth,
       setCompanionWidth,
+      llm,
+      setLlm,
     }),
-    [ready, user, users, profile, login, logout, clearProgress, visit, setNote, actions, track, snapshot, companionWidth, setCompanionWidth],
+    [ready, user, users, profile, login, logout, clearProgress, visit, setNote, actions, track, snapshot, companionWidth, setCompanionWidth, llm, setLlm],
   );
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
