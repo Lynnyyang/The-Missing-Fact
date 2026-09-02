@@ -382,7 +382,7 @@ function RctLesson() {
 
           <Panel title="连着抽很多次" hint="一次抽签会偏，很多次抽签的差围着 0 转，这才是随机抽签的承诺。">
             <div className="flex flex-wrap items-center gap-2">
-              {[20, 100, 500].map((n) => (
+              {[20, 100].map((n) => (
                 <button
                   key={n}
                   type="button"
