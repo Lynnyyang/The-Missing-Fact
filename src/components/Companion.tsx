@@ -6,7 +6,7 @@ import { RichText } from "@/components/RichText";
 type Turn = { role: "user" | "assistant"; content: string };
 
 export function Companion() {
-  const { snapshot, actions, companionWidth, setCompanionWidth } = useApp();
+  const { snapshot, actions, companionWidth, setCompanionWidth, llm } = useApp();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -47,6 +47,7 @@ export function Companion() {
           messages: next,
           snapshot,
           actions: actions.map((a) => ({ page: a.page, control: a.control, value: a.value })),
+          llm,
         }),
       });
       const data = (await res.json()) as { reply?: string; error?: string };
