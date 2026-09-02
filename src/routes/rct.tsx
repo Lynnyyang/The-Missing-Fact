@@ -256,21 +256,37 @@ function RctLesson() {
 
       {step === 1 && (
         <>
-          <Panel title="两种录取办法，切换看两组在抽签之前差多少">
+          <Panel title="录取办法可以连续地调" hint="拖这根杆，从纯随机抽签一路走到纯按成绩录取。">
             <div className="flex gap-2">
               {(["按成绩", "抽签"] as Mode[]).map((m) => (
                 <Chip
                   key={m}
                   active={mode === m}
                   onClick={() => {
-                    setMode(m);
+                    setBias(m === "抽签" ? 0 : 1);
                     setSwaps({});
-                    track("选择偏差", "录取办法", m === "抽签" ? "公开抽签" : "按入学前成绩录取");
+                    track("选择偏差", "录取办法", m === "抽签" ? "随机抽签" : "按入学前成绩录取");
                   }}
                 >
-                  {m === "抽签" ? "公开抽签" : "按入学前成绩录取"}
+                  {m === "抽签" ? "随机抽签" : "按入学前成绩录取"}
                 </Chip>
               ))}
+            </div>
+            <div className="mt-4">
+              <Dial
+                label="招生偏向：按成绩的比重"
+                value={Math.round(bias * 100)}
+                min={0}
+                max={100}
+                step={5}
+                unit="%"
+                onChange={(v) => {
+                  setBias(v / 100);
+                  setSwaps({});
+                  track("选择偏差", "招生偏向", `${v}% 按成绩`);
+                }}
+                hint="0% 是完全摇号，100% 是完全按入学前成绩排队。"
+              />
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="学习能力差" value={covar.能力.diff} tone={Math.abs(covar.能力.diff) > 2 ? "rose" : "teal"} />
