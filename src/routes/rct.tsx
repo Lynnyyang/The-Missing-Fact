@@ -502,8 +502,13 @@ function RctLesson() {
               {rows.slice(0, showN).map((r) => {
                 const open = opened.includes(r.s.id) || show === "两格";
                 const pos = (v: number) => `${Math.min(98, Math.max(0, ((v - 40) / 60) * 100))}%`;
-                const seen = r.treated ? r.s.y1 : r.s.y0;
-                const hidden = r.treated ? r.s.y0 : r.s.y1;
+                // 溢出：谁在对照组，谁就沾到好处，所以「没进班」那一格会整体右移
+                const gain = spill * 7.4;
+                const y0eff = r.s.y0 + gain;
+                const y1eff = r.s.y1;
+                const seen = r.treated ? y1eff : y0eff;
+                const hidden = r.treated ? y0eff : y1eff;
+
                 return (
                   <button
                     key={r.s.id}
