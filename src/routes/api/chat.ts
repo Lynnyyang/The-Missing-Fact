@@ -101,10 +101,15 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         try {
-          const res = await callGateway(
-            { model: "google/gemini-3.6-flash", messages, temperature: 0.4 },
-            key,
-          );
+          const res = custom
+            ? await callCustom(
+                { model: custom.model!.trim(), messages, temperature: 0.4 },
+                custom,
+              )
+            : await callGateway(
+                { model: "openai/gpt-5.6-sol", messages },
+                key!,
+              );
           if (!res.ok) {
             const text = await res.text();
             const msg =
