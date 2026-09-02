@@ -24,10 +24,10 @@ export const Route = createFileRoute("/rct")({
       { title: "青藤抽签 · 随机分组｜寻找缺失的事实" },
       {
         name: "description",
-        content: "改名额、重抽签、点学生换组、开关不依从与缺考，亲手看随机分组怎么造出可信的对照组。",
+        content: "拖招生偏向、改名额、连抽多次、点学生换组、调不依从与缺考比例，亲手看随机抽签怎么造出可信的对照组。",
       },
       { property: "og:title", content: "青藤抽签 · 随机分组" },
-      { property: "og:description", content: "按成绩录取的期末差有多脏？公开抽签之后又剩下什么？" },
+      { property: "og:description", content: "按成绩录取的期末差有多脏？随机抽签之后又剩下什么？" },
     ],
   }),
   component: RctLesson,
@@ -36,53 +36,65 @@ export const Route = createFileRoute("/rct")({
 const STEPS: Step[] = [
   { id: "rct-1", title: "了解情况" },
   { id: "rct-2", title: "选择偏差" },
-  { id: "rct-3", title: "公开抽签" },
+  { id: "rct-3", title: "随机抽签" },
   { id: "rct-4", title: "潜在结果" },
   { id: "rct-5", title: "算出效应" },
   { id: "rct-6", title: "小结" },
 ];
 
 type Mode = "抽签" | "按成绩";
+type SortKey = "学习能力" | "家庭收入" | "入学前成绩" | "分组";
 
 function RctLesson() {
   const { visit, track, profile, setNote } = useApp();
   const [step, setStep] = useState(0);
 
-  const [mode, setMode] = useState<Mode>("按成绩");
+  // 0 = 完全随机抽签，1 = 完全按入学前成绩录取
+  const [bias, setBias] = useState(1);
   const [seats, setSeats] = useState(80);
   const [seed, setSeed] = useState(1);
   const [swaps, setSwaps] = useState<Record<number, boolean>>({});
   const [spill, setSpill] = useState(0);
   const [noncompliance, setNoncompliance] = useState(false);
+  const [noncompRate, setNoncompRate] = useState(0.18);
   const [attrition, setAttrition] = useState(false);
+  const [attritionRate, setAttritionRate] = useState(0.65);
   const [show, setShow] = useState<"观测" | "两格">("观测");
   const [opened, setOpened] = useState<number[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [checks, setChecks] = useState<string[]>([]);
+  const [sortKey, setSortKey] = useState<SortKey>("入学前成绩");
+  const [tableFilter, setTableFilter] = useState<"全部" | "实验班" | "对照">("全部");
+  const [draws, setDraws] = useState<number[]>([]);
 
   const students = useMemo(() => makeStudents(), []);
+  const mode: Mode = bias < 0.15 ? "抽签" : "按成绩";
 
-  const assigned = useMemo(() => {
+  const drawSet = useMemo(() => {
     const rand = rng(1000 + seed * 7919);
-    const withRank = students.map((s) => ({ s, r: mode === "抽签" ? rand() : s.eliteRank / students.length }));
-    withRank.sort((a, b) => a.r - b.r);
-    const set = new Set(withRank.slice(0, seats).map((x) => x.s.id));
-    return students.map((s) => ({
+    const withRank = students.map((s) => ({
       s,
-      treated: swaps[s.id] ?? set.has(s.id),
+      r: bias * (s.eliteRank / students.length) + (1 - bias) * rand(),
     }));
-  }, [students, mode, seats, seed, swaps]);
+    withRank.sort((a, b) => a.r - b.r);
+    return new Set(withRank.slice(0, seats).map((x) => x.s.id));
+  }, [students, bias, seats, seed]);
+
+  const assigned = useMemo(
+    () => students.map((s) => ({ s, treated: swaps[s.id] ?? drawSet.has(s.id) })),
+    [students, drawSet, swaps],
+  );
 
   const rows = useMemo(() => {
     const rand = rng(4242 + seed);
     return assigned.map(({ s, treated }) => {
-      const complied = treated ? !(noncompliance && rand() < 0.18) : false;
+      const complied = treated ? !(noncompliance && rand() < noncompRate) : false;
       const spillGain = !treated ? spill * 7.4 : 0;
       const y = complied ? s.y1 : s.y0 + spillGain;
-      const missing = attrition && !treated && s.ability < 44 && rand() < 0.65;
+      const missing = attrition && !treated && s.ability < 44 && rand() < attritionRate;
       return { s, treated, complied, y, missing };
     });
-  }, [assigned, noncompliance, attrition, spill, seed]);
+  }, [assigned, noncompliance, noncompRate, attrition, attritionRate, spill, seed]);
 
   const kept = rows.filter((r) => !r.missing);
   const T = kept.filter((r) => r.treated);
@@ -95,6 +107,56 @@ function RctLesson() {
   const est = diffMeans(T.map((r) => r.y), C.map((r) => r.y));
   const balanced = Math.abs(covar.能力.diff) < 2 && Math.abs(covar.收入.diff) < 1.2 && Math.abs(covar.入学前成绩.diff) < 1.8;
 
+  // 连抽多次：每次记录一次「入学前成绩差」
+  const runDraws = (n: number) => {
+    const out: number[] = [];
+    for (let k = 1; k <= n; k += 1) {
+      const rand = rng(90000 + (seed + k) * 6151);
+      const withRank = students.map((s) => ({
+        s,
+        r: bias * (s.eliteRank / students.length) + (1 - bias) * rand(),
+      }));
+      withRank.sort((a, b) => a.r - b.r);
+      const set = new Set(withRank.slice(0, seats).map((x) => x.s.id));
+      const t = students.filter((s) => set.has(s.id)).map((s) => s.pre);
+      const c = students.filter((s) => !set.has(s.id)).map((s) => s.pre);
+      out.push(mean(t) - mean(c));
+    }
+    setDraws(out);
+    track("随机抽签", "连抽多次", `${n} 次，抽签前成绩差平均 ${fmt(mean(out))}`);
+  };
+
+  const drawHist = useMemo(() => {
+    if (!draws.length) return [] as { name: string; v: number }[];
+    const lo = Math.min(-6, Math.floor(Math.min(...draws)));
+    const hi = Math.max(6, Math.ceil(Math.max(...draws)));
+    const bins = 12;
+    const w = (hi - lo) / bins;
+    const counts = new Array(bins).fill(0) as number[];
+    draws.forEach((d) => {
+      const i = Math.min(bins - 1, Math.max(0, Math.floor((d - lo) / w)));
+      counts[i] = (counts[i] ?? 0) + 1;
+    });
+    return counts.map((c, i) => ({ name: fmt(lo + w * i, 1), v: c }));
+  }, [draws]);
+
+  const sortedRows = useMemo(() => {
+    const list = rows.filter((r) =>
+      tableFilter === "全部" ? true : tableFilter === "实验班" ? r.treated : !r.treated,
+    );
+    const key = (r: (typeof rows)[number]) =>
+      sortKey === "学习能力"
+        ? -r.s.ability
+        : sortKey === "家庭收入"
+          ? -r.s.income
+          : sortKey === "入学前成绩"
+            ? -r.s.pre
+            : r.treated
+              ? -1
+              : 1;
+    return [...list].sort((a, b) => key(a) - key(b));
+  }, [rows, sortKey, tableFilter]);
+
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
@@ -102,27 +164,33 @@ function RctLesson() {
   const hints: string[] = [];
   if (step === 1 && mode === "按成绩")
     hints.push("按成绩录取时，两组在抽签之前的入学前成绩就差了 " + fmt(covar.入学前成绩.diff) + " 分，期末差里混着这一截。");
-  if (step === 1 && mode === "抽签") hints.push("换成公开抽签后，入学前成绩的差应该缩到接近 0，再看期末差。");
+  if (step === 1 && mode === "抽签") hints.push("换成随机抽签后，入学前成绩的差应该缩到接近 0，再看期末差。");
+  if (step === 1 && bias > 0.15 && bias < 0.85) hints.push(`招生偏向拖到 ${Math.round(bias * 100)}%，是半随机半按成绩，偏差也只消掉一半。`);
   if (step === 2 && !balanced) hints.push("三个差里有明显偏的，按「再抽一次」换个签，或看看你手动换组换掉了谁。");
   if (step === 2 && balanced) hints.push("三个差都不大，说明抽签没有系统性把某一类人抽进班；这不代表期末差就是政策效果的证明，但对照可用。");
+  if (step === 2 && draws.length) hints.push(`你连抽了 ${draws.length} 次，抽签前成绩差平均 ${fmt(mean(draws))} 分：单次会偏，多次围着 0 转才是随机抽签的意思。`);
   if (step === 2 && Object.keys(swaps).length > 0)
     hints.push(`你手动改了 ${Object.keys(swaps).length} 名学生的分组，随机性已经被你破坏了一部分。`);
   if (step === 3 && spill > 0) hints.push("溢出打开后对照组也沾到好处，两组之差会被压小，估计偏低。");
-  if (step === 4 && noncompliance) hints.push("有人抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。");
-  if (step === 4 && attrition) hints.push("缺考只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。");
+  if (step === 4 && noncompliance) hints.push(`有 ${Math.round(noncompRate * 100)}% 抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。`);
+  if (step === 4 && attrition) hints.push(`缺考比例 ${Math.round(attritionRate * 100)}%，只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。`);
   if (est.coversZero) hints.push("置信区间盖住 0，现在这组数字说不出有效果。");
 
   useCompanionSnapshot({
     lesson: "青藤抽签（随机分组）",
     page: STEPS[step]?.title ?? "",
     facts: {
-      录取办法: mode === "抽签" ? "公开抽签" : "按入学前成绩录取",
+      录取办法: mode === "抽签" ? "随机抽签" : "按入学前成绩录取",
+      "招生偏向（按成绩的比重）": `${Math.round(bias * 100)}%`,
       实验班名额: seats,
       抽签第几次: seed,
+      连抽次数: draws.length ? `${draws.length} 次，平均抽签前成绩差 ${fmt(mean(draws))}` : "还没连抽",
       手动换组人数: Object.keys(swaps).length,
+      名单排序: sortKey,
+      名单筛选: tableFilter,
       溢出强度: `${Math.round(spill * 100)}%`,
-      不依从: noncompliance ? "开" : "关",
-      缺考: attrition ? "开" : "关",
+      不依从: noncompliance ? `开，比例 ${Math.round(noncompRate * 100)}%` : "关",
+      缺考: attrition ? `开，比例 ${Math.round(attritionRate * 100)}%` : "关",
       "学习能力差（实验班−对照）": fmt(covar.能力.diff),
       "家庭收入差（万元/年）": fmt(covar.收入.diff),
       入学前成绩差: fmt(covar.入学前成绩.diff),
@@ -131,7 +199,7 @@ function RctLesson() {
       实验班人数: T.length,
       对照人数: C.length,
     },
-    hints: hints.length ? hints : ["控件都会改数字，试着先动名额和抽签。"],
+    hints: hints.length ? hints : ["控件都会改数字，试着先拖招生偏向，再连抽几次看差怎么散开。"],
   });
 
   const covarChart = [
