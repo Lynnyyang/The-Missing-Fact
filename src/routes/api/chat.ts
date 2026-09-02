@@ -46,19 +46,27 @@ export const Route = createFileRoute("/api/chat")({
     handlers: {
       POST: async ({ request }) => {
         const key = process.env["LOVABLE_API_KEY"];
-        if (!key) {
-          return Response.json({ error: "服务端缺少 AI 密钥，无法请小果说话。" }, { status: 500 });
-        }
         let payload: {
           messages?: Msg[];
           snapshot?: unknown;
           actions?: Array<{ page: string; control: string; value: string }>;
           mode?: "review" | "chat";
+          llm?: Llm;
         };
         try {
           payload = (await request.json()) as typeof payload;
         } catch {
           return Response.json({ error: "请求格式不对。" }, { status: 400 });
+        }
+        const custom =
+          payload.llm && payload.llm.baseUrl?.trim() && payload.llm.model?.trim()
+            ? payload.llm
+            : null;
+        if (!custom && !key) {
+          return Response.json(
+            { error: "服务端缺少 AI 密钥，请在右上角「设置」里填写你自己的模型。" },
+            { status: 500 },
+          );
         }
 
         const recent = (payload.actions ?? []).slice(-16);
