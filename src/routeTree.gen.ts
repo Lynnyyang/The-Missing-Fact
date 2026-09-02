@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrepostRouteImport } from './routes/prepost'
 import { Route as RctRouteImport } from './routes/rct'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrepostRoute = PrepostRouteImport.update({
+  id: '/prepost',
+  path: '/prepost',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RctRoute = RctRouteImport.update({
@@ -31,30 +37,34 @@ const ApiChatRoute = ApiChatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/prepost': typeof PrepostRoute
   '/rct': typeof RctRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/prepost': typeof PrepostRoute
   '/rct': typeof RctRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/prepost': typeof PrepostRoute
   '/rct': typeof RctRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/rct' | '/api/chat'
+  fullPaths: '/' | '/prepost' | '/rct' | '/api/chat'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/rct' | '/api/chat'
-  id: '__root__' | '/' | '/rct' | '/api/chat'
+  to: '/' | '/prepost' | '/rct' | '/api/chat'
+  id: '__root__' | '/' | '/prepost' | '/rct' | '/api/chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrepostRoute: typeof PrepostRoute
   RctRoute: typeof RctRoute
   ApiChatRoute: typeof ApiChatRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prepost': {
+      id: '/prepost'
+      path: '/prepost'
+      fullPath: '/prepost'
+      preLoaderRoute: typeof PrepostRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rct': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrepostRoute: PrepostRoute,
   RctRoute: RctRoute,
   ApiChatRoute: ApiChatRoute,
 }
