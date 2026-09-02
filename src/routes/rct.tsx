@@ -148,8 +148,6 @@ function RctLesson() {
   if (step === 2 && !balanced) hints.push("三个差里有明显偏的，按「再抽一次」换个签，或看看你手动换组换掉了谁。");
   if (step === 2 && balanced) hints.push("三个差都不大，说明抽签没有系统性把某一类人抽进班；这不代表期末差就是政策效果的证明，但对照可用。");
   if (step === 2 && draws.length) hints.push(`你连抽了 ${draws.length} 次，抽签前成绩差平均 ${fmt(mean(draws))} 分：单次会偏，多次围着 0 转才是随机抽签的意思。`);
-  if (step === 2 && Object.keys(swaps).length > 0)
-    hints.push(`你手动改了 ${Object.keys(swaps).length} 名学生的分组，随机性已经被你破坏了一部分。`);
   if (step === 3 && spill > 0) hints.push("溢出打开后对照组也沾到好处，两组之差会被压小，估计偏低。");
   if (step === 4 && noncompliance) hints.push(`有 ${Math.round(noncompRate * 100)}% 抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。`);
   if (step === 4 && attrition) hints.push(`缺考比例 ${Math.round(attritionRate * 100)}%，只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。`);
@@ -164,9 +162,6 @@ function RctLesson() {
       实验班名额: seats,
       抽签第几次: seed,
       连抽次数: draws.length ? `${draws.length} 次，平均抽签前成绩差 ${fmt(mean(draws))}` : "还没连抽",
-      手动换组人数: Object.keys(swaps).length,
-      名单排序: sortKey,
-      名单筛选: tableFilter,
       溢出强度: `${Math.round(spill * 100)}%`,
       不依从: noncompliance ? `开，比例 ${Math.round(noncompRate * 100)}%` : "关",
       缺考: attrition ? `开，比例 ${Math.round(attritionRate * 100)}%` : "关",
