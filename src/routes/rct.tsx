@@ -485,7 +485,7 @@ function RctLesson() {
                 ＝ {fmt(mean(T.map((r) => r.y)))} − {fmt(mean(C.map((r) => r.y)))} ＝ {fmt(est.diff)}
               </p>
               <p className="mt-3 text-xs text-muted-foreground">
-                之所以能用对照组的均值代替实验班「没进班」那一格，靠的是公开抽签让两组在政策发生之前平均意义上没有系统差别。
+                之所以能用对照组的均值代替实验班「没进班」那一格，靠的是随机抽签让两组在政策发生之前平均意义上没有系统差别。
                 置信区间用两组的组内波动和人数算出来，衡量这个差有多不稳。
               </p>
             </div>
