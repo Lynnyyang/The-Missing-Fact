@@ -52,13 +52,15 @@ export function TopBar() {
         </button>
         <button
           type="button"
-          onClick={logout}
-          className="rounded-full border border-border px-2 py-1 text-muted-foreground hover:border-copper"
+          onClick={() => setShowLlm(true)}
+          className="rounded-full border border-border px-2 py-1 text-muted-foreground hover:border-copper hover:text-copper"
+          title="设置小果使用的大模型"
         >
-          换人
+          设置{llm.baseUrl && llm.model ? `（${llm.model}）` : ""}
         </button>
       </div>
       {showCert && <CertificateModal onClose={() => setShowCert(false)} />}
+      {showLlm && <LlmSettingsModal onClose={() => setShowLlm(false)} />}
     </header>
   );
 }
