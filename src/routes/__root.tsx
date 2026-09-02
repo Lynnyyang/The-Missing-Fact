@@ -77,19 +77,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "寻找缺失的事实 · 政策评估交互工作台" },
+      {
+        name: "description",
+        content: "四课交互练习：随机分组、事前事后、双重差分、合成控制，配备随时看着你操作的助手小果。",
+      },
+      { property: "og:title", content: "寻找缺失的事实 · 政策评估交互工作台" },
+      {
+        property: "og:description",
+        content: "自己动手构造反事实，四种方法四段故事，小果实时点评你的每一次操作。",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
