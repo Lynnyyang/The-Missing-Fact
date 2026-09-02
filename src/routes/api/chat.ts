@@ -56,14 +56,25 @@ export const Route = createFileRoute("/api/chat")({
             : "（学生还没动控件）",
         ].join("\n");
 
-        const messages = [
+        const history = (payload.messages ?? []).slice(-12);
+        const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
           { role: "system", content: SYSTEM },
           { role: "system", content: stateText },
           ...(payload.mode === "review"
             ? [{ role: "user" as const, content: "请点评我刚才这一步的操作。" }]
             : []),
-          ...(payload.messages ?? []).slice(-12),
+          ...history,
         ];
+        // 模型网关不接受以助手发言结尾的请求，补一句学生的话兜底。
+        if (messages[messages.length - 1]?.role !== "user") {
+          messages.push({
+            role: "user",
+            content:
+              payload.mode === "review"
+                ? "请点评我刚才这一步的操作。"
+                : "请结合我现在的界面状态继续说下去。",
+          });
+        }
 
         try {
           const res = await callGateway(
