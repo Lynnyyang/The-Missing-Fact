@@ -243,7 +243,6 @@ function RctLesson() {
                   active={mode === m}
                   onClick={() => {
                     setBias(m === "抽签" ? 0 : 1);
-                    setSwaps({});
                     track("选择偏差", "录取办法", m === "抽签" ? "随机抽签" : "按入学前成绩录取");
                   }}
                 >
@@ -261,7 +260,6 @@ function RctLesson() {
                 unit="%"
                 onChange={(v) => {
                   setBias(v / 100);
-                  setSwaps({});
                   track("选择偏差", "招生偏向", `${v}% 按成绩`);
                 }}
                 hint="0% 是完全摇号，100% 是完全按入学前成绩排队。"
@@ -329,22 +327,11 @@ function RctLesson() {
                   onClick={() => {
                     setBias(0);
                     setSeed((s) => s + 1);
-                    setSwaps({});
                     track("随机抽签", "再抽一次", `第 ${seed + 1} 次`);
                   }}
                   className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
                 >
                   再抽一次（第 {seed} 次）
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSwaps({});
-                    track("随机抽签", "撤销手动换组", "全部撤销");
-                  }}
-                  className="rounded-md border border-border px-3 py-2 text-xs"
-                >
-                  撤销手动换组
                 </button>
               </div>
             </div>
