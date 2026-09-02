@@ -13,6 +13,8 @@ const SYSTEM = `你是「小果」，一门中文政策评估教学应用里的�
 6. 全中文，不用列表符号、不用标题号；每段挑一到两处最关键的词句或数字，用两个星号包起来作为重点标示，例如 **随机分组**，其它地方不要出现星号。
 7. 结合「最近操作」推断学生刚在试什么，点名具体控件。`;
 
+type Llm = { baseUrl?: string; model?: string; apiKey?: string };
+
 async function callGateway(body: unknown, key: string) {
   return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -25,24 +27,46 @@ async function callGateway(body: unknown, key: string) {
   });
 }
 
+/** 用户自备的 OpenAI 兼容接口（如通义千问 Qwen） */
+async function callCustom(body: unknown, llm: Llm) {
+  const base = (llm.baseUrl ?? "").trim().replace(/\/+$/, "");
+  const url = /\/chat\/completions$/.test(base) ? base : `${base}/chat/completions`;
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(llm.apiKey ? { Authorization: `Bearer ${llm.apiKey.trim()}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const key = process.env["LOVABLE_API_KEY"];
-        if (!key) {
-          return Response.json({ error: "服务端缺少 AI 密钥，无法请小果说话。" }, { status: 500 });
-        }
         let payload: {
           messages?: Msg[];
           snapshot?: unknown;
           actions?: Array<{ page: string; control: string; value: string }>;
           mode?: "review" | "chat";
+          llm?: Llm;
         };
         try {
           payload = (await request.json()) as typeof payload;
         } catch {
           return Response.json({ error: "请求格式不对。" }, { status: 400 });
+        }
+        const custom =
+          payload.llm && payload.llm.baseUrl?.trim() && payload.llm.model?.trim()
+            ? payload.llm
+            : null;
+        if (!custom && !key) {
+          return Response.json(
+            { error: "服务端缺少 AI 密钥，请在右上角「设置」里填写你自己的模型。" },
+            { status: 500 },
+          );
         }
 
         const recent = (payload.actions ?? []).slice(-16);
@@ -77,10 +101,15 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         try {
-          const res = await callGateway(
-            { model: "google/gemini-3.6-flash", messages, temperature: 0.4 },
-            key,
-          );
+          const res = custom
+            ? await callCustom(
+                { model: custom.model!.trim(), messages, temperature: 0.4 },
+                custom,
+              )
+            : await callGateway(
+                { model: "openai/gpt-5.6-sol", messages },
+                key!,
+              );
           if (!res.ok) {
             const text = await res.text();
             const msg =

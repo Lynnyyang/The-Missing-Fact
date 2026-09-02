@@ -8,7 +8,7 @@ import { RichText } from "@/components/RichText";
  * 学生不需要手动提交。
  */
 export function AutoReview({ page = "小结" }: { page?: string } = {}) {
-  const { snapshot, actions } = useApp();
+  const { snapshot, actions, llm } = useApp();
   const [reply, setReply] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +26,7 @@ export function AutoReview({ page = "小结" }: { page?: string } = {}) {
           messages: [],
           snapshot,
           actions: actions.map((a) => ({ page: a.page, control: a.control, value: a.value })),
+          llm,
         }),
       });
       const data = (await res.json()) as { reply?: string; error?: string };
@@ -36,7 +37,7 @@ export function AutoReview({ page = "小结" }: { page?: string } = {}) {
     } finally {
       setBusy(false);
     }
-  }, [snapshot, actions]);
+  }, [snapshot, actions, llm]);
 
   useEffect(() => {
     // 等到本页的界面状态真正就位后再自动发送，避免用上一页的数据点评。
