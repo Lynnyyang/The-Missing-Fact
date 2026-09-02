@@ -26,7 +26,7 @@ const LESSONS = [
     to: "/rct" as const,
     name: "青藤抽签",
     method: "随机分组",
-    story: "实验班学位只够一半申请者，按成绩录取还是公开抽签？",
+    story: "实验班学位只够一半申请者，按成绩录取还是随机抽签？",
     key: "rct",
   },
   {
