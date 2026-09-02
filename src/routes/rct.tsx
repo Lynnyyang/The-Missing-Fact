@@ -24,7 +24,7 @@ export const Route = createFileRoute("/rct")({
       { title: "青藤抽签 · 随机分组｜寻找缺失的事实" },
       {
         name: "description",
-        content: "拖招生偏向、改名额、连抽多次、点学生换组、调不依从与缺考比例，亲手看随机抽签怎么造出可信的对照组。",
+        content: "拖招生偏向、改名额、连抽多次、调不依从与缺考比例，亲手看随机抽签怎么造出可信的对照组。",
       },
       { property: "og:title", content: "青藤抽签 · 随机分组" },
       { property: "og:description", content: "按成绩录取的期末差有多脏？随机抽签之后又剩下什么？" },
@@ -43,7 +43,6 @@ const STEPS: Step[] = [
 ];
 
 type Mode = "抽签" | "按成绩";
-type SortKey = "学习能力" | "家庭收入" | "入学前成绩" | "分组";
 
 function RctLesson() {
   const { visit, track, profile, setNote } = useApp();
@@ -53,7 +52,6 @@ function RctLesson() {
   const [bias, setBias] = useState(1);
   const [seats, setSeats] = useState(80);
   const [seed, setSeed] = useState(1);
-  const [swaps, setSwaps] = useState<Record<number, boolean>>({});
   const [spill, setSpill] = useState(0);
   const [noncompliance, setNoncompliance] = useState(false);
   const [noncompRate, setNoncompRate] = useState(0.18);
@@ -63,8 +61,6 @@ function RctLesson() {
   const [opened, setOpened] = useState<number[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [checks, setChecks] = useState<string[]>([]);
-  const [sortKey, setSortKey] = useState<SortKey>("入学前成绩");
-  const [tableFilter, setTableFilter] = useState<"全部" | "实验班" | "对照">("全部");
   const [draws, setDraws] = useState<number[]>([]);
 
   const students = useMemo(() => makeStudents(), []);
@@ -81,8 +77,8 @@ function RctLesson() {
   }, [students, bias, seats, seed]);
 
   const assigned = useMemo(
-    () => students.map((s) => ({ s, treated: swaps[s.id] ?? drawSet.has(s.id) })),
-    [students, drawSet, swaps],
+    () => students.map((s) => ({ s, treated: drawSet.has(s.id) })),
+    [students, drawSet],
   );
 
   const rows = useMemo(() => {
@@ -140,23 +136,6 @@ function RctLesson() {
     return counts.map((c, i) => ({ name: fmt(lo + w * i, 1), v: c }));
   }, [draws]);
 
-  const sortedRows = useMemo(() => {
-    const list = rows.filter((r) =>
-      tableFilter === "全部" ? true : tableFilter === "实验班" ? r.treated : !r.treated,
-    );
-    const key = (r: (typeof rows)[number]) =>
-      sortKey === "学习能力"
-        ? -r.s.ability
-        : sortKey === "家庭收入"
-          ? -r.s.income
-          : sortKey === "入学前成绩"
-            ? -r.s.pre
-            : r.treated
-              ? -1
-              : 1;
-    return [...list].sort((a, b) => key(a) - key(b));
-  }, [rows, sortKey, tableFilter]);
-
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
@@ -169,8 +148,6 @@ function RctLesson() {
   if (step === 2 && !balanced) hints.push("三个差里有明显偏的，按「再抽一次」换个签，或看看你手动换组换掉了谁。");
   if (step === 2 && balanced) hints.push("三个差都不大，说明抽签没有系统性把某一类人抽进班；这不代表期末差就是政策效果的证明，但对照可用。");
   if (step === 2 && draws.length) hints.push(`你连抽了 ${draws.length} 次，抽签前成绩差平均 ${fmt(mean(draws))} 分：单次会偏，多次围着 0 转才是随机抽签的意思。`);
-  if (step === 2 && Object.keys(swaps).length > 0)
-    hints.push(`你手动改了 ${Object.keys(swaps).length} 名学生的分组，随机性已经被你破坏了一部分。`);
   if (step === 3 && spill > 0) hints.push("溢出打开后对照组也沾到好处，两组之差会被压小，估计偏低。");
   if (step === 4 && noncompliance) hints.push(`有 ${Math.round(noncompRate * 100)}% 抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。`);
   if (step === 4 && attrition) hints.push(`缺考比例 ${Math.round(attritionRate * 100)}%，只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。`);
@@ -185,9 +162,6 @@ function RctLesson() {
       实验班名额: seats,
       抽签第几次: seed,
       连抽次数: draws.length ? `${draws.length} 次，平均抽签前成绩差 ${fmt(mean(draws))}` : "还没连抽",
-      手动换组人数: Object.keys(swaps).length,
-      名单排序: sortKey,
-      名单筛选: tableFilter,
       溢出强度: `${Math.round(spill * 100)}%`,
       不依从: noncompliance ? `开，比例 ${Math.round(noncompRate * 100)}%` : "关",
       缺考: attrition ? `开，比例 ${Math.round(attritionRate * 100)}%` : "关",
@@ -264,7 +238,6 @@ function RctLesson() {
                   active={mode === m}
                   onClick={() => {
                     setBias(m === "抽签" ? 0 : 1);
-                    setSwaps({});
                     track("选择偏差", "录取办法", m === "抽签" ? "随机抽签" : "按入学前成绩录取");
                   }}
                 >
@@ -282,7 +255,6 @@ function RctLesson() {
                 unit="%"
                 onChange={(v) => {
                   setBias(v / 100);
-                  setSwaps({});
                   track("选择偏差", "招生偏向", `${v}% 按成绩`);
                 }}
                 hint="0% 是完全摇号，100% 是完全按入学前成绩排队。"
@@ -350,22 +322,11 @@ function RctLesson() {
                   onClick={() => {
                     setBias(0);
                     setSeed((s) => s + 1);
-                    setSwaps({});
                     track("随机抽签", "再抽一次", `第 ${seed + 1} 次`);
                   }}
                   className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
                 >
                   再抽一次（第 {seed} 次）
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSwaps({});
-                    track("随机抽签", "撤销手动换组", "全部撤销");
-                  }}
-                  className="rounded-md border border-border px-3 py-2 text-xs"
-                >
-                  撤销手动换组
                 </button>
               </div>
             </div>
@@ -440,76 +401,6 @@ function RctLesson() {
             ) : (
               <p className="mt-3 text-xs text-muted-foreground">按一次上面的按钮，就会把每次抽签的「抽签前成绩差」画成分布。</p>
             )}
-          </Panel>
-
-          <Panel title="点学生换组" hint="点一行就把这名学生挪到另一组，看三个差怎么被你带偏。">
-            <div className="flex flex-wrap gap-2">
-              {(["学习能力", "家庭收入", "入学前成绩", "分组"] as SortKey[]).map((k) => (
-                <Chip
-                  key={k}
-                  active={sortKey === k}
-                  onClick={() => {
-                    setSortKey(k);
-                    track("随机抽签", "名单排序", k);
-                  }}
-                >
-                  按{k}排
-                </Chip>
-              ))}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {(["全部", "实验班", "对照"] as const).map((f) => (
-                <Chip
-                  key={f}
-                  tone="teal"
-                  active={tableFilter === f}
-                  onClick={() => {
-                    setTableFilter(f);
-                    track("随机抽签", "名单筛选", f);
-                  }}
-                >
-                  只看{f}
-                </Chip>
-              ))}
-            </div>
-            <div className="mt-3 max-h-72 overflow-y-auto rounded-lg border border-border">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-card text-muted-foreground">
-                  <tr>
-                    <th className="px-2 py-2 text-left">学生</th>
-                    <th className="px-2 py-2 text-right">学习能力</th>
-                    <th className="px-2 py-2 text-right">家庭收入</th>
-                    <th className="px-2 py-2 text-right">入学前成绩</th>
-                    <th className="px-2 py-2 text-right">分组</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedRows.slice(0, 40).map((r) => (
-                    <tr
-                      key={r.s.id}
-                      onClick={() => {
-                        setSwaps((p) => ({ ...p, [r.s.id]: !r.treated }));
-                        track("随机抽签", "点学生换组", `${r.s.name} → ${!r.treated ? "实验班" : "对照"}`);
-                      }}
-                      className={`cursor-pointer border-t border-border hover:bg-accent ${
-                        swaps[r.s.id] !== undefined ? "bg-accent/60" : ""
-                      }`}
-                    >
-                      <td className="px-2 py-1.5">
-                        {r.s.name}
-                        {swaps[r.s.id] !== undefined && <span className="ml-2 text-[10px] text-copper">手动</span>}
-                      </td>
-                      <td className="num px-2 py-1.5 text-right">{fmt(r.s.ability, 1)}</td>
-                      <td className="num px-2 py-1.5 text-right">{fmt(r.s.income, 1)}</td>
-                      <td className="num px-2 py-1.5 text-right">{fmt(r.s.pre, 1)}</td>
-                      <td className={`px-2 py-1.5 text-right ${r.treated ? "text-copper" : "text-muted-foreground"}`}>
-                        {r.treated ? "实验班" : "对照"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </Panel>
         </>
       )}
