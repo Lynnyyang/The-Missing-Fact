@@ -34,10 +34,15 @@ export type Profile = {
 
 const emptyProfile: Profile = { xp: 0, visited: [], notes: {} };
 
+/** 用户自备的大模型连接信息（OpenAI 兼容接口，如通义千问 Qwen） */
+export type LlmSettings = { baseUrl: string; model: string; apiKey: string };
+const emptyLlm: LlmSettings = { baseUrl: "", model: "", apiKey: "" };
+
 const K_USER = "cb-session-user";
 const K_INDEX = "cb-user-index";
 const K_PROFILE = (u: string) => `cb-profile:${u}`;
 const K_WIDTH = "cb-companion-width";
+const K_LLM = "cb-llm-settings";
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
