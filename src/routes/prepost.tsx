@@ -57,6 +57,7 @@ function PrePostLesson() {
   const [startMonth, setStartMonth] = useState(POLICY_MONTH);
   const [window_, setWindow] = useState(18);
   const [shocks, setShocks] = useState<Record<ShockKey, boolean>>({ typhoon: false, viral: false, fire: false });
+  const [effectRevealed, setEffectRevealed] = useState(false);
 
   const data = useMemo(() => makeFerry({ shocks, policyMonth: POLICY_MONTH }), [shocks]);
 
