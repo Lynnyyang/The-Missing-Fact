@@ -13,6 +13,8 @@ const SYSTEM = `你是「小果」，一门中文政策评估教学应用里的�
 6. 全中文，不用列表符号、不用标题号；每段挑一到两处最关键的词句或数字，用两个星号包起来作为重点标示，例如 **随机分组**，其它地方不要出现星号。
 7. 结合「最近操作」推断学生刚在试什么，点名具体控件。`;
 
+type Llm = { baseUrl?: string; model?: string; apiKey?: string };
+
 async function callGateway(body: unknown, key: string) {
   return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -20,6 +22,20 @@ async function callGateway(body: unknown, key: string) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${key}`,
       "Lovable-API-Key": key,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+/** 用户自备的 OpenAI 兼容接口（如通义千问 Qwen） */
+async function callCustom(body: unknown, llm: Llm) {
+  const base = (llm.baseUrl ?? "").trim().replace(/\/+$/, "");
+  const url = /\/chat\/completions$/.test(base) ? base : `${base}/chat/completions`;
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(llm.apiKey ? { Authorization: `Bearer ${llm.apiKey.trim()}` } : {}),
     },
     body: JSON.stringify(body),
   });
