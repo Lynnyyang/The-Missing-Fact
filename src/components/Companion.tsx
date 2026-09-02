@@ -63,7 +63,7 @@ export function Companion() {
 
   return (
     <aside
-      className="relative hidden shrink-0 border-l border-border bg-ink-2/60 lg:flex lg:flex-col"
+      className="relative hidden shrink-0 self-start overflow-hidden border-l border-border bg-ink-2/60 lg:sticky lg:top-[45px] lg:flex lg:h-[calc(100vh-45px)] lg:flex-col"
       style={{ width: companionWidth }}
     >
       <div
@@ -71,7 +71,7 @@ export function Companion() {
         className="absolute top-0 -left-1 h-full w-2 cursor-col-resize hover:bg-copper/40"
         title="拖动调整小果窗口宽度"
       />
-      <header className="border-b border-border px-4 py-3">
+      <header className="shrink-0 border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-copper text-xs font-bold text-primary-foreground">
             果
@@ -83,7 +83,7 @@ export function Companion() {
         </div>
       </header>
 
-      <div className="border-b border-border px-4 py-3">
+      <div className="max-h-40 shrink-0 overflow-y-auto border-b border-border px-4 py-3">
         <div className="text-[11px] tracking-wide text-muted-foreground">即时提醒</div>
         <div className="mt-2 space-y-2">
           {(snapshot?.hints?.length ? snapshot.hints : ["动一下控件，我就开口。"]).map((h) => (
@@ -94,7 +94,7 @@ export function Companion() {
         </div>
       </div>
 
-      <div className="border-b border-border px-4 py-3">
+      <div className="max-h-36 shrink-0 overflow-y-auto border-b border-border px-4 py-3">
         <div className="text-[11px] tracking-wide text-muted-foreground">小果看着你的操作</div>
         <ul className="mt-2 space-y-1">
           {recent.length === 0 && <li className="text-xs text-muted-foreground">还没有操作记录。</li>}
@@ -127,7 +127,7 @@ export function Companion() {
         {error && <p className="text-xs text-rose">{error}</p>}
       </div>
 
-      <div className="border-t border-border p-3">
+      <div className="shrink-0 border-t border-border bg-ink-2/90 p-3">
         <button
           type="button"
           disabled={busy}
