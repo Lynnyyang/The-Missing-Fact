@@ -10,33 +10,83 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DidRouteImport } from './routes/did'
+import { Route as PrepostRouteImport } from './routes/prepost'
+import { Route as RctRouteImport } from './routes/rct'
+import { Route as SynthRouteImport } from './routes/synth'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DidRoute = DidRouteImport.update({
+  id: '/did',
+  path: '/did',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrepostRoute = PrepostRouteImport.update({
+  id: '/prepost',
+  path: '/prepost',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RctRoute = RctRouteImport.update({
+  id: '/rct',
+  path: '/rct',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SynthRoute = SynthRouteImport.update({
+  id: '/synth',
+  path: '/synth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/did': typeof DidRoute
+  '/prepost': typeof PrepostRoute
+  '/rct': typeof RctRoute
+  '/synth': typeof SynthRoute
+  '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/did': typeof DidRoute
+  '/prepost': typeof PrepostRoute
+  '/rct': typeof RctRoute
+  '/synth': typeof SynthRoute
+  '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/did': typeof DidRoute
+  '/prepost': typeof PrepostRoute
+  '/rct': typeof RctRoute
+  '/synth': typeof SynthRoute
+  '/api/chat': typeof ApiChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/did' | '/prepost' | '/rct' | '/synth' | '/api/chat'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/did' | '/prepost' | '/rct' | '/synth' | '/api/chat'
+  id: '__root__' | '/' | '/did' | '/prepost' | '/rct' | '/synth' | '/api/chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DidRoute: typeof DidRoute
+  PrepostRoute: typeof PrepostRoute
+  RctRoute: typeof RctRoute
+  SynthRoute: typeof SynthRoute
+  ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +98,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/did': {
+      id: '/did'
+      path: '/did'
+      fullPath: '/did'
+      preLoaderRoute: typeof DidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prepost': {
+      id: '/prepost'
+      path: '/prepost'
+      fullPath: '/prepost'
+      preLoaderRoute: typeof PrepostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rct': {
+      id: '/rct'
+      path: '/rct'
+      fullPath: '/rct'
+      preLoaderRoute: typeof RctRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/synth': {
+      id: '/synth'
+      path: '/synth'
+      fullPath: '/synth'
+      preLoaderRoute: typeof SynthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DidRoute: DidRoute,
+  PrepostRoute: PrepostRoute,
+  RctRoute: RctRoute,
+  SynthRoute: SynthRoute,
+  ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
