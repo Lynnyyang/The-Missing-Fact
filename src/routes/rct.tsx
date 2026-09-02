@@ -112,7 +112,9 @@ function RctLesson() {
   if (step === 3 && spill > 0) hints.push("溢出打开后对照组也沾到好处，两组之差会被压小，估计偏低。");
   if (step === 4 && noncompliance) hints.push("有人抽中不去，按分组算出来的是意向处理效应，不是真正上课的效果。");
   if (step === 4 && attrition) hints.push("缺考只发生在对照组的低能力学生身上，对照被拧高了，估计会偏小。");
-  if (est.coversZero) hints.push("置信区间盖住 0，现在这组数字说不出有效果。");
+  if (est.coversZero && !(step === 4 && !revealed))
+    hints.push("置信区间盖住 0，现在这组数字说不出有效果。");
+
 
   useCompanionSnapshot({
     lesson: "青藤抽签（随机分组）",
