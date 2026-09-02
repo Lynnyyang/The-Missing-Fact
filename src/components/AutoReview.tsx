@@ -6,7 +6,7 @@ import { Panel } from "@/components/kit";
  * 小结页自动点评：进入本页时把界面状态与本课操作记录自动发给小果，
  * 学生不需要手动提交。
  */
-export function AutoReview() {
+export function AutoReview({ page = "小结" }: { page?: string } = {}) {
   const { snapshot, actions } = useApp();
   const [reply, setReply] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,10 +38,12 @@ export function AutoReview() {
   }, [snapshot, actions]);
 
   useEffect(() => {
-    if (fired.current || !snapshot) return;
+    // 等到本页的界面状态真正就位后再自动发送，避免用上一页的数据点评。
+    if (fired.current || !snapshot || snapshot.page !== page) return;
     fired.current = true;
-    void ask();
-  }, [snapshot, ask]);
+    const t = setTimeout(() => void ask(), 300);
+    return () => clearTimeout(t);
+  }, [snapshot, ask, page]);
 
   const count = actions.length;
 
