@@ -61,9 +61,9 @@ export function makeFerry(opts: { shocks: Record<ShockKey, boolean>; policyMonth
   for (let t = 0; t < 84; t++) {
     const year = 2015 + Math.floor(t / 12);
     const month = (t % 12) + 1;
-    // 教学用：曲线做成平滑的，不加随机抖动，便于看清对照线
-    const season = 380 * Math.sin(((month - 3) / 12) * 2 * Math.PI);
-    const festival = 150 * Math.exp(-Math.pow(month - 9, 2) / 2); // 渔获节前后的平滑隆起
+    // 教学用：曲线做成平滑的，不加随机抖动；季节和节日只做轻微痕迹，避免月度波动遮挡趋势
+    const season = 45 * Math.sin(((month - 3) / 12) * 2 * Math.PI);
+    const festival = 18 * Math.exp(-Math.pow(month - 9, 2) / 2); // 渔获节前后的轻微平滑隆起
     let v = 4200 + 9 * t + season + festival;
     if (t >= opts.policyMonth) v += 420;
     if (opts.shocks.typhoon && year === 2018 && month === 9) v -= 900;
