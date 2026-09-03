@@ -85,11 +85,37 @@ function SynthLesson() {
     return { gap: (placeboCity.pm[SC_YEARS.length - 1] ?? 0) - (p[SC_YEARS.length - 1] ?? 0), path: p };
   }, [placeboCity, donorsAll, on]);
 
+  // 第二步：对所有未被处理过的在篮供体城市，各跑一次安慰剂
+  const eligible = donorsAll.filter((d) => !d.alreadyTreated && on.includes(d.key));
+  const placeboAll = useMemo(() => {
+    if (!ranAll) return [];
+    return eligible.map((city) => {
+      const others = eligible.filter((d) => d.key !== city.key);
+      const fit = fitSynth(
+        city.pm.slice(0, PRE_LEN),
+        others.map((d) => d.pm.slice(0, PRE_LEN)),
+        1200,
+      );
+      const p = SC_YEARS.map((_, t) => others.reduce((s, d, j) => s + (fit.weights[j] ?? 0) * (d.pm[t] ?? 0), 0));
+      const gap = (city.pm[SC_YEARS.length - 1] ?? 0) - (p[SC_YEARS.length - 1] ?? 0);
+      return { city, gap, preRmse: fit.rmse, ratio: fit.rmse > 0.01 ? Math.abs(gap) / fit.rmse : 0, path: p };
+    });
+  }, [ranAll, eligible]);
+
+  const lanRatio = preFit > 0.01 ? Math.abs(gapNow) / preFit : 0;
+  const moreExtreme = placeboAll.filter((r) => Math.abs(r.gap) >= Math.abs(gapNow)).length;
+  const ratioMoreExtreme = placeboAll.filter((r) => r.ratio >= lanRatio).length;
+  const totalUnits = placeboAll.length + 1;
+  const approxP = totalUnits > 1 ? (ratioMoreExtreme + 1) / totalUnits : null;
+
   const chart = SC_YEARS.map((y, t) => ({
     year: String(y),
     岚城: target.pm[t] ?? 0,
     合成岚城: Math.round((path[t] ?? 0) * 10) / 10,
     ...(placeboFit ? { [`安慰剂 ${placeboCity!.name}`]: Math.round((placeboFit.path[t] ?? 0) * 10) / 10 } : {}),
+    ...(showAllPaths
+      ? Object.fromEntries(placeboAll.map((r) => [`安慰剂·${r.city.name}`, Math.round((r.path[t] ?? 0) * 10) / 10]))
+      : {}),
   }));
 
   useEffect(() => {
