@@ -112,7 +112,7 @@ export function makeBlocks(): Block[] {
     const slope = b.trap === "商务中心" ? 0.3 : b.trap === "机场噪音" ? -0.02 : 0.12;
     DID_YEARS.forEach((y, i) => {
       let p = b.prePrice + slope * i + normal(rand, 0, 0.035);
-      if (b.treated && y >= OPEN_YEAR) p += 0.95 * Math.min(1, (y - OPEN_YEAR + 1) / 2);
+      if (b.treated && y >= OPEN_YEAR) p += 1.6 * Math.min(1, (y - OPEN_YEAR + 1) / 2);
       prices[y] = Math.round(p * 100) / 100;
     });
     return { ...b, prices };
