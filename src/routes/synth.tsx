@@ -164,6 +164,9 @@ function SynthLesson() {
       "最后一年缺口（μg/m³）": fmt(gapNow, 1),
       安慰剂城市: placeboCity?.name ?? "还没跑",
       安慰剂缺口: placeboFit ? fmt(placeboFit.gap, 1) : "—",
+      全部安慰剂: ranAll ? `已跑 ${placeboAll.length} 个` : "还没跑",
+      "岚城极端程度排名（共几座城市）": ranAll ? `第 ${moreExtreme + 1} 名，共 ${totalUnits} 座` : "—",
+      "校正后近似 p 值": approxP !== null ? fmt(approxP, 2) : "—",
     },
     hints: hints.length ? hints : ["先把已被同类政策处理过的城市从篮子里拿掉。"],
   });
