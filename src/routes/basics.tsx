@@ -219,7 +219,14 @@ function BasicsLesson() {
         ? ["每张牌背后有两格期末成绩：参加提升营的 Y(1) 与没参加提升营的 Y(0)。"]
         : step === 1
           ? ["提升营让这个人多考的分数＝Y(1) − Y(0)，现实里永远只观测到其中一格。"]
-          : step === 3
+          : step === 2
+            ? naiveGodMode
+              ? [
+                  `观测差 ${fmt(naiveStat.obs)} 分＝真实效应 ATT ${fmt(naiveStat.att)} 分＋选择偏差 ${fmt(naiveStat.selection)} 分。`,
+                ]
+              : ["打开上帝视角，看看参加营的人如果没来，平均分是不是也比没参加的人高。"]
+            : step === 3
+
             ? Math.abs(coin.selection) > 3
               ? ["这一次掷硬币两组底子差得有点多，再掷一次或连掷多次看看。"]
               : ["掷硬币让选择偏差围着 0 抖，所以观测差才近似 ATE。"]
