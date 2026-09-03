@@ -404,8 +404,7 @@ function SynthLesson() {
                 <div className="h-56">
                   <ResponsiveContainer>
                     <BarChart
-                      data={[...placeboAll]
-                        .sort((a, b) => a.gap - b.gap)
+                      data={placeboAll
                         .map((r) => ({ name: r.city.name, 缺口: Math.round(r.gap * 10) / 10 }))
                         .concat([{ name: "岚城", 缺口: Math.round(gapNow * 10) / 10 }])
                         .sort((a, b) => a.缺口 - b.缺口)}
@@ -416,13 +415,20 @@ function SynthLesson() {
                       <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
                       <ReferenceLine y={0} stroke="var(--border)" />
                       <Bar dataKey="缺口" radius={[4, 4, 0, 0]}>
-                        {[...placeboAll.map((r) => ({ name: r.city.name })), { name: "岚城" }].map((e) => (
-                          <Cell key={e.name} fill={e.name === "岚城" ? "var(--copper)" : "var(--muted-foreground)"} fillOpacity={e.name === "岚城" ? 1 : 0.45} />
-                        ))}
+                        {placeboAll
+                          .map((r) => ({ name: r.city.name, 缺口: r.gap }))
+                          .concat([{ name: "岚城", 缺口: gapNow }])
+                          .sort((a, b) => a.缺口 - b.缺口)
+                          .map((e) => (
+                            <Cell key={e.name} fill={e.name === "岚城" ? "var(--copper)" : "var(--muted-foreground)"} fillOpacity={e.name === "岚城" ? 1 : 0.45} />
+                          ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                  注意：这里的柱子按**缺口大小**排队，而第三步的表按**|缺口|÷拟合误差**排队，所以两处的顺序和排名本来就会不同——第二步只看缺口，第三步把拟合质量也算进去。
+                </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                   <Tile label="岚城缺口" value={gapNow} unit="μg/m³" tone="copper" />
                   <Tile label="比岚城更极端的安慰剂" value={`${moreExtreme} / ${placeboAll.length}`} tone={moreExtreme === 0 ? "teal" : "rose"} />
