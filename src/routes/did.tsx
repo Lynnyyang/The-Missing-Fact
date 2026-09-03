@@ -534,7 +534,7 @@ function DidLesson() {
 
       {step === 3 && (
         <>
-          <Panel title="把缺的那一格画出来" hint="虚线就是反事实：从通车街区事前那一点出发，按对照的涨幅往前走。">
+          <Panel title="画出反事实虚线" hint="虚线表示通车街区若不通车，会按对照的涨幅走到哪里。">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="text-[11px] text-muted-foreground">事后取</span>
               {DID_YEARS.filter((y) => y >= OPEN_YEAR).map((y) => (
