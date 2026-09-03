@@ -17,8 +17,8 @@ import {
 import { LessonShell, type Step } from "@/components/Shell";
 import { Callout, Chip, GuessBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
 import { AutoReview } from "@/components/AutoReview";
-import { DID_YEARS, OPEN_YEAR, makeBlocks, type Block } from "@/lib/synth";
-import { did, fitLine, fmt, mean } from "@/lib/stats";
+import { DID_YEARS, OPEN_YEAR, makeBlocks, makePlaceboBlocks, type Block } from "@/lib/synth";
+import { did, fitLine, fmt, mean, rng } from "@/lib/stats";
 import { useApp, useCompanionSnapshot } from "@/state/app";
 
 export const Route = createFileRoute("/did")({
