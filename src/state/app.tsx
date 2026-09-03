@@ -157,6 +157,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const clearActions = useCallback(() => setActions([]), []);
+
   const setCompanionWidth = useCallback((w: number) => {
     const clamped = Math.min(720, Math.max(300, w));
     setWidthState(clamped);
