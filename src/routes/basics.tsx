@@ -476,6 +476,64 @@ function BasicsLesson() {
               }}
               hint="现实里看不到参加营者如果没参加会考多少，这里用教学数据让你看到。"
             />
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Tile label="参加营者观测均值" value={naiveStat.obsT} tone="teal" />
+              <Tile label="没参加营者观测均值" value={naiveStat.obsC} />
+              <Tile
+                label="参加营者若没参加的均值"
+                value={naiveGodMode ? fmt(naiveStat.obsC + naiveStat.selection) : "？"}
+                tone="rose"
+              />
+              <Tile label="观测到的均值差" value={naiveStat.obs} tone="copper" />
+            </div>
+            <div className="mt-3 h-48">
+              <ResponsiveContainer>
+                <BarChart data={naiveMeanBars}>
+                  <CartesianGrid stroke="rgba(235,230,214,0.08)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#8d8878" }} interval={0} />
+                  <YAxis tick={{ fontSize: 11, fill: "#8d8878" }} />
+                  <Tooltip
+                    contentStyle={{ background: "#12161c", border: "1px solid rgba(196,122,44,0.4)", fontSize: 12 }}
+                    formatter={(v: number) => [fmt(v), "期末成绩"]}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {naiveMeanBars.map((b) => (
+                      <Cell
+                        key={b.key}
+                        fill={
+                          b.key === "control"
+                            ? "#8d8878"
+                            : b.key === "treated"
+                              ? "#5ea8a0"
+                              : naiveGodMode
+                                ? "#e94560"
+                                : "rgba(233,69,96,0.12)"
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="num mt-3 text-sm">
+              观测差 {fmt(naiveStat.obs)} ＝ ATT {fmt(naiveStat.att)} ＋ 选择偏差 {fmt(naiveStat.selection)}
+            </p>
+            <div className="mt-3">
+              <Callout tone="rose">
+                {naiveMode === "random" ? (
+                  <>随机分组下，参加营的人本来也没比没参加的人高多少，观测差 {fmt(naiveStat.obs)} 分接近真实效应。</>
+                ) : (
+                  <>
+                    <strong>
+                      {naiveMode === "highY0" ? "成绩好的学生优先参加" : "觉得自己进步大的学生优先参加"}
+                    </strong>
+                    ，参加营的人就算不来，平均分也比没参加的人高{" "}
+                    <span className="num text-copper">{fmt(Math.abs(naiveStat.selection))}</span> 分。
+                    所以 {fmt(naiveStat.obs)} 分的观测差里，只有 {fmt(naiveStat.att)} 分是营的效应，其余是底子差。
+                  </>
+                )}
+              </Callout>
+            </div>
           </Panel>
 
           <Panel title="能拿到的数据长什么样" hint="现实数据只有一列期末成绩，加一列「参加提升营了没有」。">
