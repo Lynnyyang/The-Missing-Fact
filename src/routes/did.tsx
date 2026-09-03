@@ -181,10 +181,6 @@ function DidLesson() {
     };
   });
 
-  const yearly = DID_YEARS.filter((y) => y !== preYear).map((y) => {
-    const b = did(t0, avg(treated, y), c0, chosen.length ? avg(chosen, y) : 0);
-    return { year: String(y), 缺口: Math.round(b.att * 100) / 100 };
-  });
 
   /* ---------- 安慰剂实验 ---------- */
   const pool = useMemo(() => makePlaceboBlocks(), []);
@@ -876,38 +872,6 @@ function DidLesson() {
             </Callout>
           </Panel>
 
-          <Panel title="逐年缺口：另一种看法" hint="真通车之前的柱子应当接近 0，通车之后才抬起来。">
-            <div className="h-60">
-              <ResponsiveContainer>
-                <BarChart data={yearly}>
-                  <CartesianGrid stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="year" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                  <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
-                  <ReferenceLine y={0} stroke="var(--muted-foreground)" />
-                  <Bar dataKey="缺口" radius={3}>
-                    {yearly.map((d) => (
-                      <Cell
-                        key={d.year}
-                        fill={Number(d.year) >= OPEN_YEAR ? "var(--copper)" : Math.abs(d.缺口) > 0.12 ? "var(--rose)" : "var(--teal)"}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Panel>
-          <Panel title="换掉对照，再看一眼" hint="对照换了，上面的估计和柱子都会跟着变。">
-            <ControlPicker
-              controls={controls}
-              picked={picked}
-              onToggle={togglePick}
-              treatedPre={t0}
-              treatedSlope={slopeT}
-              preYears={preYears}
-              compact
-            />
-          </Panel>
         </>
       )}
 
