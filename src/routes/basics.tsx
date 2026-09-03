@@ -76,11 +76,17 @@ function BasicsLesson() {
   const [who, setWho] = useState(0);
   const [sorted, setSorted] = useState(false);
 
+  // 第 2 步：为什么不能直接相减
+  const [naiveGodMode, setNaiveGodMode] = useState(false);
+  const [naiveMode, setNaiveMode] = useState<"random" | "highY0" | "highEffect">("highY0");
+  const [naiveSeed, setNaiveSeed] = useState(1);
+
   // 第 3、4 步
   const [coinSeed, setCoinSeed] = useState(1);
   const [batch, setBatch] = useState<number[]>([]);
   const [bias, setBias] = useState(0);
   const [hideMissing, setHideMissing] = useState(true);
+
 
   const people = useMemo(() => makePeople(), []);
   const ate = mean(people.map((p) => p.effect));
