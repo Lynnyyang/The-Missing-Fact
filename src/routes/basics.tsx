@@ -78,7 +78,7 @@ function BasicsLesson() {
 
   // 第 2 步：为什么不能直接相减
   const [naiveGodMode, setNaiveGodMode] = useState(false);
-  const [naiveMode, setNaiveMode] = useState<"random" | "highY0" | "highEffect">("highY0");
+  const [naiveMode, setNaiveMode] = useState<"random" | "highY0" | "lowY0">("highY0");
   const [naiveSeed, setNaiveSeed] = useState(1);
 
   // 第 3、4 步
