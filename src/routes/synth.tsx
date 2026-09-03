@@ -291,7 +291,12 @@ function SynthLesson() {
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
             <Tile label="改气前拟合误差" value={preFit} tone={preFit > 3 ? "rose" : "teal"} />
-            <Tile label="最后一年缺口" value={gapNow} unit="μg/m³" tone="copper" />
+            {step === 3 && !gapRevealed ? (
+              <Tile label="最后一年缺口" value="先猜后显示" tone="copper" sub="在下面写下猜测并点“对照答案”" />
+            ) : (
+              <Tile label="最后一年缺口" value={gapNow} unit="μg/m³" tone="copper" />
+            )}
+
             <Tile label="供体个数" value={donors.length} />
           </div>
         </Panel>
