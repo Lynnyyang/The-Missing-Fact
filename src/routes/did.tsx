@@ -271,8 +271,12 @@ function DidLesson() {
     hints.push(`对照通车前的房价水平比通车街区${levelGap < 0 ? "低" : "高"} ${fmt(Math.abs(levelGap))} 万元，这没关系，双重差分只借变化量。`);
   if (step === 3 && !hasTrap && chosen.length >= 2)
     hints.push(`通车前两条线的年斜率差是 ${fmt(parallelGap, 3)} 万元/年，越小越好。`);
-  if (step === 4 && fakeYear < OPEN_YEAR)
-    hints.push(`把通车年改成 ${fakeYear} 之后缺口是 ${fmt(fakeBox.att)}，真通车之前应该接近 0。`);
+  if (step === 4)
+    hints.push(
+      `把政策时间提前到 ${fakeYear} 年，估计是 ${fmt(fakeBox.att)}，p 值 ${fmt(pFake, 3)}；真通车年的估计是 ${fmt(realBox.att)}，p 值 ${fmt(pReal, 3)}。`,
+    );
+  if (step === 4 && pRandom >= 0.05)
+    hints.push(`这次随机指定的政策组估计是 ${fmt(randDraw.att)}，p 值 ${fmt(pRandom, 3)}，按 0.05 判不显著，这正是预期。`);
 
   useCompanionSnapshot({
     lesson: "银线通车（双重差分与匹配）",
