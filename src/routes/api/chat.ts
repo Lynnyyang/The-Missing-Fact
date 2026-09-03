@@ -24,6 +24,9 @@ const SYSTEM = `你是「小果」，一门计量经济学政策评估课程教�
     第三段：针对这个缺口给一步具体动作，点名界面上真实存在的控件，并说清动完该看哪个数字怎么变。`;
 
 
+const REVIEW_ASK =
+  "请结合我刚才的操作点评一下：我动了哪些控件、界面上的数字变成了什么，这一课该掌握的要点我有没有真的做到，还差哪一步。";
+
 type Llm = { baseUrl?: string; model?: string; apiKey?: string };
 
 async function callGateway(body: unknown, key: string) {
@@ -96,7 +99,7 @@ export const Route = createFileRoute("/api/chat")({
           { role: "system", content: SYSTEM },
           { role: "system", content: stateText },
           ...(payload.mode === "review"
-            ? [{ role: "user" as const, content: "请点评我刚才这一步的操作。" }]
+            ? [{ role: "user" as const, content: REVIEW_ASK }]
             : []),
           ...history,
         ];
@@ -106,7 +109,7 @@ export const Route = createFileRoute("/api/chat")({
             role: "user",
             content:
               payload.mode === "review"
-                ? "请点评我刚才这一步的操作。"
+                ? REVIEW_ASK
                 : "请结合我现在的界面状态继续说下去。",
           });
         }
