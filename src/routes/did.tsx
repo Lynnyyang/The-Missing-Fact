@@ -164,9 +164,10 @@ function DidLesson() {
     return row;
   });
 
-  const cfValue = cfDrag || t0;
   const tOpen = avg(treated, OPEN_YEAR);
   const cOpen = chosen.length ? avg(chosen, OPEN_YEAR) : 0;
+  const cfValue = cfDrag || tOpen;
+  const cfAnchorEnd = chosen.length ? tOpen + (c1 - cOpen) : tOpen;
   const cfData = DID_YEARS.map((y) => {
     const cAvg = chosen.length ? avg(chosen, y) : 0;
     const cf = y >= OPEN_YEAR && chosen.length ? Math.round((tOpen + (cAvg - cOpen)) * 100) / 100 : null;
@@ -175,8 +176,8 @@ function DidLesson() {
       通车街区: Math.round(avg(treated, y) * 100) / 100,
       对照街区: chosen.length ? Math.round(cAvg * 100) / 100 : null,
       "若不通车（反事实）": showCf ? cf : null,
-      你拖出来的线: cfDrawn && chosen.length && (y === preYear || y === postYear)
-        ? Math.round((y === preYear ? t0 : cfValue) * 100) / 100
+      你拖出来的线: cfDrawn && chosen.length && (y === OPEN_YEAR || y === postYear)
+        ? Math.round((y === OPEN_YEAR ? tOpen : cfValue) * 100) / 100
         : null,
     };
   });
