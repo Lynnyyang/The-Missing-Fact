@@ -72,6 +72,7 @@ type Ctx = {
   visit: (id: string, xp?: number) => void;
   actions: Action[];
   track: (page: string, control: string, value: string | number | boolean) => void;
+  clearActions: () => void;
   snapshot: Snapshot | null;
   setSnapshot: (s: Snapshot | null) => void;
   companionWidth: number;
@@ -157,6 +158,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const clearActions = useCallback(() => setActions([]), []);
+
   const setCompanionWidth = useCallback((w: number) => {
     const clamped = Math.min(720, Math.max(300, w));
     setWidthState(clamped);
@@ -180,6 +183,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       visit,
       actions,
       track,
+      clearActions,
       snapshot,
       setSnapshot,
       companionWidth,
@@ -187,7 +191,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       llm,
       setLlm,
     }),
-    [ready, user, users, profile, login, logout, clearProgress, visit, actions, track, snapshot, companionWidth, setCompanionWidth, llm, setLlm],
+    [ready, user, users, profile, login, logout, clearProgress, visit, actions, track, clearActions, snapshot, companionWidth, setCompanionWidth, llm, setLlm],
   );
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

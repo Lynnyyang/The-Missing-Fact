@@ -6,7 +6,7 @@ import { RichText } from "@/components/RichText";
 type Turn = { role: "user" | "assistant"; content: string };
 
 export function Companion() {
-  const { snapshot, actions, companionWidth, setCompanionWidth, llm } = useApp();
+  const { snapshot, actions, clearActions, companionWidth, setCompanionWidth, llm } = useApp();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -96,7 +96,18 @@ export function Companion() {
       </div>
 
       <div className="max-h-36 shrink-0 overflow-y-auto border-b border-border px-4 py-3">
-        <div className="text-[11px] tracking-wide text-muted-foreground">小果看着你的操作</div>
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] tracking-wide text-muted-foreground">小果看着你的操作</div>
+          {actions.length > 0 && (
+            <button
+              type="button"
+              onClick={clearActions}
+              className="text-[11px] text-muted-foreground hover:text-copper"
+            >
+              清除
+            </button>
+          )}
+        </div>
         <ul className="mt-2 space-y-1">
           {recent.length === 0 && <li className="text-xs text-muted-foreground">还没有操作记录。</li>}
           {recent.map((a, i) => (
