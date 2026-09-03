@@ -76,11 +76,17 @@ function BasicsLesson() {
   const [who, setWho] = useState(0);
   const [sorted, setSorted] = useState(false);
 
+  // 第 2 步：为什么不能直接相减
+  const [naiveGodMode, setNaiveGodMode] = useState(false);
+  const [naiveMode, setNaiveMode] = useState<"random" | "highY0" | "lowY0">("highY0");
+  const [naiveSeed, setNaiveSeed] = useState(1);
+
   // 第 3、4 步
   const [coinSeed, setCoinSeed] = useState(1);
   const [batch, setBatch] = useState<number[]>([]);
   const [bias, setBias] = useState(0);
   const [hideMissing, setHideMissing] = useState(true);
+
 
   const people = useMemo(() => makePeople(), []);
   const ate = mean(people.map((p) => p.effect));
@@ -117,7 +123,37 @@ function BasicsLesson() {
   const coin = stat(coinRows);
   const biased = stat(biasRows);
 
+  const naiveRows = useMemo(() => {
+    if (naiveMode === "random") {
+      const rand = rng(8000 + naiveSeed * 3333);
+      const scored = people.map((p) => ({ p, score: rand() }));
+      scored.sort((a, b) => b.score - a.score);
+      const treated = new Set(scored.slice(0, Math.round(people.length / 2)).map((x) => x.p.id));
+      return people.map((p) => ({ p, treated: treated.has(p.id) }));
+    }
+    if (naiveMode === "highY0") {
+      const sorted = [...people].sort((a, b) => b.y0 - a.y0);
+      const treated = new Set(sorted.slice(0, Math.round(people.length / 2)).map((p) => p.id));
+      return people.map((p) => ({ p, treated: treated.has(p.id) }));
+    }
+    // lowY0
+    const sorted = [...people].sort((a, b) => a.y0 - b.y0);
+    const treated = new Set(sorted.slice(0, Math.round(people.length / 2)).map((p) => p.id));
+    return people.map((p) => ({ p, treated: treated.has(p.id) }));
+  }, [people, naiveMode, naiveSeed]);
+  const naiveStat = useMemo(() => stat(naiveRows), [naiveRows]);
+  const naiveMeanBars = useMemo(
+    () => [
+      { name: "没参加营", value: naiveStat.obsC, key: "control" as const },
+      { name: "参加营若没来", value: naiveStat.obsC + naiveStat.selection, key: "counter" as const },
+      { name: "参加营", value: naiveStat.obsT, key: "treated" as const },
+    ],
+    [naiveStat],
+  );
+
   const effectBars = useMemo(() => {
+
+
     const list = people.map((p) => ({ name: p.name, v: p.effect, id: p.id }));
     return sorted ? [...list].sort((a, b) => b.v - a.v) : list;
   }, [people, sorted]);
@@ -155,7 +191,19 @@ function BasicsLesson() {
     facts["提升营让他多考几分（个体效应）"] = fmt(p.effect);
     facts["全体平均效应 ATE"] = fmt(ate);
   }
+  if (step === 2) {
+    facts["分组方式"] =
+      naiveMode === "random" ? "随机分组" : naiveMode === "highY0" ? "成绩好的优先参加" : "成绩差的优先参加";
+    facts["上帝视角"] = naiveGodMode ? "打开" : "关闭";
+    facts["参加营者观测均值"] = fmt(naiveStat.obsT);
+    facts["没参加营者观测均值"] = fmt(naiveStat.obsC);
+    facts["观测到的均值差"] = fmt(naiveStat.obs);
+    facts["参加营者若没参加的均值"] = naiveGodMode ? fmt(naiveStat.obsC + naiveStat.selection) : "？";
+    facts["选择偏差"] = naiveGodMode ? fmt(naiveStat.selection) : "？";
+    facts["全体平均效应 ATE"] = fmt(ate);
+  }
   if (step === 3) {
+
     facts["第几次掷硬币"] = coinSeed;
     facts["参加营组观测均值"] = fmt(coin.obsT);
     facts["没参加营组观测均值"] = fmt(coin.obsC);
@@ -181,7 +229,14 @@ function BasicsLesson() {
         ? ["每张牌背后有两格期末成绩：参加提升营的 Y(1) 与没参加提升营的 Y(0)。"]
         : step === 1
           ? ["提升营让这个人多考的分数＝Y(1) − Y(0)，现实里永远只观测到其中一格。"]
-          : step === 3
+          : step === 2
+            ? naiveGodMode
+              ? [
+                  `观测差 ${fmt(naiveStat.obs)} 分＝真实效应 ATT ${fmt(naiveStat.att)} 分＋选择偏差 ${fmt(naiveStat.selection)} 分。`,
+                ]
+              : ["打开上帝视角，看看参加营的人如果没来，平均分与没参加的人差多少——这就是选择偏差。"]
+            : step === 3
+
             ? Math.abs(coin.selection) > 3
               ? ["这一次掷硬币两组底子差得有点多，再掷一次或连掷多次看看。"]
               : ["掷硬币让选择偏差围着 0 抖，所以观测差才近似 ATE。"]
@@ -378,6 +433,118 @@ function BasicsLesson() {
 
       {step === 2 && (
         <>
+          <Panel
+            title="为什么不能直接相减？"
+            hint="换几种分组方式，再打开上帝视角，看观测到的均值差里混进了多少‘底子差’。"
+            right={
+              <div className="flex flex-wrap justify-end gap-2">
+                <Chip
+                  active={naiveMode === "random"}
+                  onClick={() => {
+                    setNaiveMode("random");
+                    track("缺失的一半", "分组方式", "随机分组");
+                  }}
+                >
+                  随机分组
+                </Chip>
+                <Chip
+                  active={naiveMode === "highY0"}
+                  onClick={() => {
+                    setNaiveMode("highY0");
+                    track("缺失的一半", "分组方式", "成绩好的优先");
+                  }}
+                >
+                  成绩好的优先
+                </Chip>
+                <Chip
+                  active={naiveMode === "lowY0"}
+                  onClick={() => {
+                    setNaiveMode("lowY0");
+                    track("缺失的一半", "分组方式", "成绩差的优先");
+                  }}
+                >
+                  成绩差的优先
+                </Chip>
+              </div>
+            }
+          >
+            <Toggle
+              label="上帝视角：看到没发生的那一格"
+              checked={naiveGodMode}
+              onChange={(v) => {
+                setNaiveGodMode(v);
+                track("缺失的一半", "上帝视角", v ? "打开" : "关闭");
+              }}
+              hint="现实里看不到参加营者如果没参加会考多少，这里用教学数据让你看到。"
+            />
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Tile label="参加营者观测均值" value={naiveStat.obsT} tone="teal" />
+              <Tile label="没参加营者观测均值" value={naiveStat.obsC} />
+              <Tile
+                label="参加营者若没参加的均值"
+                value={naiveGodMode ? fmt(naiveStat.obsC + naiveStat.selection) : "？"}
+                tone="rose"
+              />
+              <Tile label="观测到的均值差" value={naiveStat.obs} tone="copper" />
+            </div>
+            <div className="mt-3 h-48">
+              <ResponsiveContainer>
+                <BarChart data={naiveMeanBars}>
+                  <CartesianGrid stroke="rgba(235,230,214,0.08)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#8d8878" }} interval={0} />
+                  <YAxis tick={{ fontSize: 11, fill: "#8d8878" }} />
+                  <Tooltip
+                    contentStyle={{ background: "#12161c", border: "1px solid rgba(196,122,44,0.4)", fontSize: 12 }}
+                    formatter={(v: number) => [fmt(v), "期末成绩"]}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {naiveMeanBars.map((b) => (
+                      <Cell
+                        key={b.key}
+                        fill={
+                          b.key === "control"
+                            ? "#8d8878"
+                            : b.key === "treated"
+                              ? "#5ea8a0"
+                              : naiveGodMode
+                                ? "#e94560"
+                                : "rgba(233,69,96,0.12)"
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="num mt-3 text-sm">
+              观测差 {fmt(naiveStat.obs)} ＝ ATT {fmt(naiveStat.att)} ＋ 选择偏差 {fmt(naiveStat.selection)}
+            </p>
+            <div className="mt-3">
+              <Callout tone="rose">
+                {naiveMode === "random" ? (
+                  <>随机分组下，参加营的人本来也没比没参加的人高多少，观测差 {fmt(naiveStat.obs)} 分接近真实效应。</>
+                ) : (
+                  <>
+                    <strong>{naiveMode === "highY0" ? "成绩好的学生优先参加" : "成绩差的学生优先参加"}</strong>
+                    ，参加营的人就算不来，平均分
+                    {naiveStat.selection > 0.5 ? (
+                      <>
+                        比没参加的人高 <span className="num text-copper">{fmt(naiveStat.selection)}</span> 分
+                      </>
+                    ) : naiveStat.selection < -0.5 ? (
+                      <>
+                        比没参加的人低 <span className="num text-copper">{fmt(Math.abs(naiveStat.selection))}</span> 分
+                      </>
+                    ) : (
+                      "和没参加的人差不多"
+                    )}
+                    。所以 {fmt(naiveStat.obs)} 分的观测差里，只有 {fmt(naiveStat.att)} 分是营的效应，其余是底子差。
+                  </>
+                )}
+              </Callout>
+            </div>
+          </Panel>
+
           <Panel title="能拿到的数据长什么样" hint="现实数据只有一列期末成绩，加一列「参加提升营了没有」。">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -390,17 +557,20 @@ function BasicsLesson() {
                   </tr>
                 </thead>
                 <tbody className="num">
-                  {people.map((q, i) => {
-                    const treated = i % 2 === 0;
-                    return (
-                      <tr key={q.id} className="border-t border-border/60">
-                        <td className="py-1.5 font-sans">{q.name}</td>
-                        <td className="py-1.5 font-sans">{treated ? "参加营" : "没参加营"}</td>
-                        <td className="py-1.5 text-teal">{fmt(treated ? q.y1 : q.y0, 1)}</td>
-                        <td className="py-1.5 text-rose">？</td>
-                      </tr>
-                    );
-                  })}
+                  {naiveRows.map((r) => (
+                    <tr key={r.p.id} className="border-t border-border/60">
+                      <td className="py-1.5 font-sans">{r.p.name}</td>
+                      <td className="py-1.5 font-sans">{r.treated ? "参加营" : "没参加营"}</td>
+                      <td className="py-1.5 text-teal">{fmt(r.treated ? r.p.y1 : r.p.y0, 1)}</td>
+                      <td className="py-1.5">
+                        {naiveGodMode ? (
+                          <span className="text-rose">{fmt(r.treated ? r.p.y0 : r.p.y1, 1)}</span>
+                        ) : (
+                          <span className="text-rose">？</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
