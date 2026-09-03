@@ -117,33 +117,87 @@ export const Route = createFileRoute("/api/chat")({
         try {
           const res = custom
             ? await callCustom(
-                { model: custom.model!.trim(), messages, temperature: 0.4 },
+                { model: custom.model!.trim(), messages, temperature: 0.4, stream: true },
                 custom,
               )
             : await callGateway(
-                { model: "openai/gpt-5.6-sol", messages },
+                { model: "openai/gpt-5.6-sol", messages, stream: true },
                 key!,
               );
-          if (!res.ok) {
-            const text = await res.text();
+          if (!res.ok || !res.body) {
+            const text = await res.text().catch(() => "");
             const msg =
               res.status === 402
                 ? "工作区的 AI 额度用完了，请补充额度后再请小果点评。"
                 : res.status === 429
                   ? "请求太密了，稍等几秒再点。"
                   : `小果这次没答上来（${res.status}）：${text.slice(0, 200)}`;
-            return Response.json({ error: msg }, { status: res.status });
+            return Response.json({ error: msg }, { status: res.status || 502 });
           }
-          const data = (await res.json()) as {
-            choices?: Array<{ message?: { content?: string } }>;
-          };
-          const raw = data.choices?.[0]?.message?.content ?? "";
-          const reply = raw
-            .replace(/<think>[\s\S]*?<\/think>/g, "")
-            .replace(/[#`>]/g, "")
-            .replace(/\*{3,}/g, "**")
-            .trim();
-          return Response.json({ reply: reply || "小果没能整理出话来，再点一次试试。" });
+
+          // 把上游 SSE 逐块清洗后，以纯文本流的形式发给前端，边生成边显示。
+          const upstream = res.body;
+          const stream = new ReadableStream<Uint8Array>({
+            async start(controller) {
+              const reader = upstream.getReader();
+              const decoder = new TextDecoder();
+              const encoder = new TextEncoder();
+              let buf = "";
+              let inThink = false;
+              const push = (chunk: string) => {
+                let s = chunk;
+                if (inThink) {
+                  const end = s.indexOf("</think>");
+                  if (end === -1) return;
+                  s = s.slice(end + 8);
+                  inThink = false;
+                }
+                const start = s.indexOf("<think>");
+                if (start !== -1) {
+                  inThink = true;
+                  s = s.slice(0, start);
+                }
+                const clean = s.replace(/[#`>]/g, "").replace(/\*{3,}/g, "**");
+                if (clean) controller.enqueue(encoder.encode(clean));
+              };
+              try {
+                for (;;) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  buf += decoder.decode(value, { stream: true });
+                  const lines = buf.split("\n");
+                  buf = lines.pop() ?? "";
+                  for (const line of lines) {
+                    const t = line.trim();
+                    if (!t.startsWith("data:")) continue;
+                    const data = t.slice(5).trim();
+                    if (!data || data === "[DONE]") continue;
+                    try {
+                      const j = JSON.parse(data) as {
+                        choices?: Array<{ delta?: { content?: string } }>;
+                      };
+                      const piece = j.choices?.[0]?.delta?.content;
+                      if (piece) push(piece);
+                    } catch {
+                      /* 忽略非 JSON 的心跳行 */
+                    }
+                  }
+                }
+              } catch {
+                controller.enqueue(encoder.encode("\n（连接中断，请重新点一次。）"));
+              } finally {
+                controller.close();
+              }
+            },
+          });
+
+          return new Response(stream, {
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Accel-Buffering": "no",
+            },
+          });
         } catch (e) {
           return Response.json(
             { error: `连不上模型网关：${e instanceof Error ? e.message : "未知错误"}` },
