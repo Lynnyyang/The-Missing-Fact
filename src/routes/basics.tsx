@@ -432,6 +432,21 @@ function BasicsLesson() {
 
       {step === 2 && (
         <>
+          <Panel
+            title="为什么不能直接相减？"
+            hint="换几种分组方式，再打开上帝视角，看观测到的均值差里混进了多少‘底子差’。"
+          >
+            <Toggle
+              label="上帝视角：看到没发生的那一格"
+              checked={naiveGodMode}
+              onChange={(v) => {
+                setNaiveGodMode(v);
+                track("缺失的一半", "上帝视角", v ? "打开" : "关闭");
+              }}
+              hint="现实里看不到参加营者如果没参加会考多少，这里用教学数据让你看到。"
+            />
+          </Panel>
+
           <Panel title="能拿到的数据长什么样" hint="现实数据只有一列期末成绩，加一列「参加提升营了没有」。">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
