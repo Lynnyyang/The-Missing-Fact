@@ -58,7 +58,7 @@ function SynthLesson() {
   const badIncluded = donors.filter((d) => d.alreadyTreated);
 
   const norm = useMemo(() => {
-    const raw = donors.map((d) => Math.max(0, weights[d.key] ?? 1 / Math.max(donors.length, 1)));
+    const raw = donors.map((d) => Math.max(0, weights[d.key] ?? 0));
     const s = raw.reduce((a, b) => a + b, 0);
     return donors.map((d, i) => ({ city: d, w: s > 0 ? (raw[i] ?? 0) / s : 0 }));
   }, [donors, weights]);
@@ -248,7 +248,7 @@ function SynthLesson() {
               <Dial
                 key={d.key}
                 label={`${d.name} 权重`}
-                value={Math.round((weights[d.key] ?? 1 / donors.length) * 100) / 100}
+                value={Math.round((weights[d.key] ?? 0) * 100) / 100}
                 min={0}
                 max={1}
                 step={0.02}
