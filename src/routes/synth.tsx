@@ -146,6 +146,11 @@ function SynthLesson() {
     hints.push(
       `${placeboCity!.name} 假装改气后的缺口是 ${fmt(placeboFit.gap, 1)}，跟岚城的 ${fmt(gapNow, 1)} 比一比谁更突出。`,
     );
+  if (step === 4 && !ranAll) hints.push("单个安慰剂不算数，点“跑全部安慰剂”，看岚城在整群假改气城市里排第几。");
+  if (step === 4 && ranAll && approxP !== null)
+    hints.push(
+      `岚城的缺口比 ${placeboAll.length - moreExtreme}/${placeboAll.length} 个安慰剂更极端；按拟合误差校正后近似 p 值是 ${fmt(approxP, 2)}，${approxP <= 0.2 ? "勉强说得过去" : "挡不住巧合的解释"}。`,
+    );
 
   useCompanionSnapshot({
     lesson: "岚城煤改气（合成控制）",
