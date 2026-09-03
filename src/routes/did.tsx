@@ -220,7 +220,7 @@ function DidLesson() {
       通车前水平差: fmt(levelGap),
       通车街区这段时间的变化: fmt(box.treatedChange),
       对照这段时间的变化: fmt(box.controlChange),
-      "若不通车的那一格（反事实）": fmt(box.counterfactual),
+      "反事实事后房价（通车街区若不通车）": fmt(box.counterfactual),
       "双重差分估计 ATT": effectRevealed ? fmt(box.att) : "未揭示（等待用户先猜）",
       通车前趋势起算年: trendStart,
       通车前年斜率差: fmt(parallelGap, 3),
