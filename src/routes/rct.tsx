@@ -493,10 +493,18 @@ function RctLesson() {
               />
             </div>
 
-            <div className="mt-4 flex items-center justify-between px-1 text-[11px] text-muted-foreground">
-              <span className="num">40 分</span>
-              <span>期末科学测验</span>
-              <span className="num">100 分</span>
+            <div className="mt-4 flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
+              <span className="w-16 shrink-0" />
+              <span className="w-10 shrink-0" />
+              <span className="relative h-8 min-w-0 flex-1">
+                <span className="absolute left-1/2 top-0 -translate-x-1/2">期末科学测验（分）</span>
+                {[40, 60, 80, 100].map((v) => (
+                  <span key={v} className="absolute bottom-0 -translate-x-1/2 num" style={{ left: `${((v - 40) / 60) * 100}%` }}>
+                    {v}
+                  </span>
+                ))}
+              </span>
+              <span className="w-24 shrink-0" />
             </div>
             <div className="mt-1 space-y-1">
               {rows.slice(0, showN).map((r) => {
