@@ -31,7 +31,7 @@ const LESSONS = [
   },
   {
     to: "/prepost" as const,
-    name: "碣石渡免票",
+    name: "碧石渡免票",
     method: "事前事后",
     story: "2018 年 7 月渡轮免票，用这座岛自己的过去当对照。",
     key: "prepost",

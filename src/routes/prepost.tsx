@@ -20,12 +20,12 @@ import { useApp, useCompanionSnapshot } from "@/state/app";
 export const Route = createFileRoute("/prepost")({
   head: () => ({
     meta: [
-      { title: "碣石渡免票 · 事前事后｜寻找缺失的事实" },
+      { title: "碧石渡免票 · 事前事后｜寻找缺失的事实" },
       {
         name: "description",
         content: "拖开始月份、切换水平延续与趋势外推、开关台风短视频火灾，看事前事后什么时候能用。",
       },
-      { property: "og:title", content: "碣石渡免票 · 事前事后" },
+      { property: "og:title", content: "碧石渡免票 · 事前事后" },
       { property: "og:description", content: "用这座岛自己的过去当对照，前提是窗口里没有别的大事。" },
     ],
   }),
@@ -117,7 +117,7 @@ function PrePostLesson() {
   if (step === 1 && clicked.includes("festival")) hints.push("渔获节每年都有，季节可以有，别把它当成干扰。");
 
   useCompanionSnapshot({
-    lesson: "碣石渡免票（事前事后）",
+    lesson: "碧石渡免票（事前事后）",
     page: STEPS[step]?.title ?? "",
     facts: {
       免票开始月份: data[POLICY_MONTH]?.label ?? "2018-07",
@@ -137,7 +137,7 @@ function PrePostLesson() {
 
   return (
     <LessonShell
-      lesson="碣石渡免票"
+      lesson="碧石渡免票"
       subtitle="事前事后：把这座岛自己的过去当对照"
       steps={STEPS}
       step={step}
