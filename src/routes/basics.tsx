@@ -136,7 +136,8 @@ function BasicsLesson() {
       const treated = new Set(sorted.slice(0, Math.round(people.length / 2)).map((p) => p.id));
       return people.map((p) => ({ p, treated: treated.has(p.id) }));
     }
-    const sorted = [...people].sort((a, b) => b.effect - a.effect);
+    // lowY0
+    const sorted = [...people].sort((a, b) => a.y0 - b.y0);
     const treated = new Set(sorted.slice(0, Math.round(people.length / 2)).map((p) => p.id));
     return people.map((p) => ({ p, treated: treated.has(p.id) }));
   }, [people, naiveMode, naiveSeed]);
