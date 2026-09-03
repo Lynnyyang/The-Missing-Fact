@@ -38,7 +38,7 @@ export const Route = createFileRoute("/did")({
 
 const STEPS: Step[] = [
   { id: "did-1", title: "了解情况" },
-  { id: "did-2", title: "挑选对照" },
+  { id: "did-2", title: "搭出双重差分" },
   { id: "did-3", title: "平行趋势" },
   { id: "did-4", title: "画出反事实" },
   { id: "did-5", title: "逐年检查" },
@@ -115,6 +115,8 @@ function DidLesson() {
   const [showEach, setShowEach] = useState(false);
   const [showCf, setShowCf] = useState(true);
   const [effectRevealed, setEffectRevealed] = useState(false);
+  const [compareMode, setCompareMode] = useState<"post" | "prepost" | "did">("post");
+  const [buildStage, setBuildStage] = useState(0);
 
   const blocks = useMemo(() => makeBlocks(), []);
   const treated = blocks.filter((b) => b.treated);
@@ -134,6 +136,15 @@ function DidLesson() {
   const slopeC = chosen.length ? fitLine(preYears, preYears.map((y) => avg(chosen, y))).b : 0;
   const parallelGap = Math.abs(slopeT - slopeC);
   const hasTrap = chosen.some((b) => b.trap);
+
+  const compareValue =
+    compareMode === "post" ? t1 - c1 : compareMode === "prepost" ? box.treatedChange : box.att;
+  const compareNote =
+    compareMode === "post"
+      ? `只比事后两组，等于把通车前本来就有的 ${fmt(Math.abs(levelGap))} 万元水平差也算成了通车的功劳。`
+      : compareMode === "prepost"
+        ? `只比通车街区自己的前后，等于把全城同期的涨幅 ${fmt(box.controlChange)} 万元也算了进来。`
+        : `双重差分把固定的水平差和同期的大势各减掉一次，剩下的 ${fmt(box.att)} 万元才是通车多出来的部分。`;
 
   const shift = alignLevel ? t0 - c0 : 0;
   const trendData = DID_YEARS.map((y) => {
@@ -217,6 +228,9 @@ function DidLesson() {
       反事实虚线: showCf ? "显示" : "隐藏",
       安慰剂通车年: fakeYear,
       安慰剂缺口: fmt(fakeBox.att),
+      当前比法: compareMode === "post" ? "只比事后两组" : compareMode === "prepost" ? "只比通车街区前后" : "双重差分",
+      当前比法给出的数: fmt(compareValue),
+      "一格一格搭进度（0-4）": buildStage,
       对照里是否含陷阱街区: hasTrap ? "含（金贸或机场边）" : "不含",
     },
     hints: hints.length ? hints : ["点街区加减对照，四格和反事实虚线会立刻重算。"],
@@ -292,74 +306,158 @@ function DidLesson() {
 
       {step === 1 && (
         <>
-          <Panel title="按密度、到中心距离、通车前趋势挑对照" hint="点选，至少两个。斜率差越小越合适。">
-            <ControlPicker
-              controls={controls}
-              picked={picked}
-              onToggle={togglePick}
-              treatedPre={t0}
-              treatedSlope={slopeT}
-              preYears={preYears}
-            />
-            <div className="mt-3 flex flex-wrap gap-2">
+          <Panel title="换一种比法，看看数字会变成什么" hint="同一批数据，三种比法给出三个不同的答案。点一下切换。">
+            <div className="flex flex-wrap gap-2">
               <Chip
-                active={picked.length === controls.filter((b) => !b.trap).length && !hasTrap}
+                tone="rose"
+                active={compareMode === "post"}
                 onClick={() => {
-                  setPicked(controls.filter((b) => !b.trap).map((b) => b.key));
-                  track("挑选对照", "一键选择", "全部无陷阱街区");
+                  setCompareMode("post");
+                  track("搭出双重差分", "切换比法", "只比事后两组");
                 }}
               >
-                选全部四个普通街区
+                只比事后两组
               </Chip>
               <Chip
                 tone="rose"
-                active={picked.length === 1}
+                active={compareMode === "prepost"}
                 onClick={() => {
-                  setPicked(["hx"]);
-                  track("挑选对照", "一键选择", "只留河西一个");
+                  setCompareMode("prepost");
+                  track("搭出双重差分", "切换比法", "只比通车街区前后");
                 }}
               >
-                只留一个对照试试
+                只比通车街区前后
               </Chip>
               <Chip
-                tone="rose"
-                active={hasTrap}
+                active={compareMode === "did"}
                 onClick={() => {
-                  setPicked(["jm", "jc"]);
-                  track("挑选对照", "一键选择", "只选陷阱街区");
+                  setCompareMode("did");
+                  track("搭出双重差分", "切换比法", "双重差分");
                 }}
               >
-                故意选两个陷阱街区
+                双重差分
               </Chip>
             </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Tile label="这种比法的答案" value={compareValue} unit="万元" tone={compareMode === "did" ? "copper" : "rose"} />
+              <Tile label="通车前水平差" value={levelGap} unit="万元" />
+              <Tile label="对照同期涨幅" value={box.controlChange} unit="万元" tone="teal" />
+            </div>
+            <div className="mt-3">
+              <Callout tone={compareMode === "did" ? "copper" : "rose"}>{compareNote}</Callout>
+            </div>
           </Panel>
-          <Panel title="选中之后马上看四格的两个事前格" hint="事前年份可以换。">
+
+          <Panel title="一格一格搭出来" hint="点「下一步」，看着四格怎么变成一个估计。">
             <div className="mb-3 flex flex-wrap gap-2">
+              <Chip
+                onClick={() => {
+                  const s = Math.min(4, buildStage + 1);
+                  setBuildStage(s);
+                  track("搭出双重差分", "搭建进度", `第 ${s} 步`);
+                }}
+              >
+                下一步
+              </Chip>
+              <Chip
+                tone="rose"
+                onClick={() => {
+                  setBuildStage(0);
+                  track("搭出双重差分", "搭建进度", "重来");
+                }}
+              >
+                重来
+              </Chip>
+              <span className="self-center text-[11px] text-muted-foreground">进度 {buildStage} / 4</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Tile label={`通车街区 ${preYear}`} value={t0} tone="copper" />
+              <Tile label={`通车街区 ${postYear}`} value={t1} tone="copper" />
+              <Tile label={`对照 ${preYear}`} value={c0} tone="teal" />
+              <Tile label={`对照 ${postYear}`} value={c1} tone="teal" />
+            </div>
+            <div className="mt-3 space-y-2 text-xs leading-relaxed">
+              {buildStage >= 1 && (
+                <div className="panel px-3 py-2">
+                  <div className="text-[11px] text-muted-foreground">第一步：通车街区自己涨了多少</div>
+                  <div className="num mt-1">
+                    {fmt(t1)} − {fmt(t0)} = <span className="text-copper">{fmt(box.treatedChange)}</span>
+                  </div>
+                </div>
+              )}
+              {buildStage >= 2 && (
+                <div className="panel px-3 py-2">
+                  <div className="text-[11px] text-muted-foreground">第二步：对照街区同期涨了多少（借来的大势）</div>
+                  <div className="num mt-1">
+                    {fmt(c1)} − {fmt(c0)} = <span className="text-teal">{fmt(box.controlChange)}</span>
+                  </div>
+                </div>
+              )}
+              {buildStage >= 3 && (
+                <div className="panel px-3 py-2">
+                  <div className="text-[11px] text-muted-foreground">第三步：补出缺的那一格（若不通车的事后水平）</div>
+                  <div className="num mt-1">
+                    {fmt(t0)} + {fmt(box.controlChange)} = <span className="text-rose">{fmt(box.counterfactual)}</span>
+                  </div>
+                </div>
+              )}
+              {buildStage >= 4 && (
+                <div className="panel px-3 py-2">
+                  <div className="text-[11px] text-muted-foreground">第四步：事后实际 − 反事实，就是双重差分</div>
+                  <div className="num mt-1">
+                    {fmt(t1)} − {fmt(box.counterfactual)} = <span className="text-copper">{fmt(box.att)}</span>
+                  </div>
+                </div>
+              )}
+              {buildStage === 0 && (
+                <p className="text-muted-foreground">四个格子已经在上面了。点「下一步」，一次看清一个减法。</p>
+              )}
+            </div>
+          </Panel>
+
+          <Panel title="换事前、事后年份，看这套算法稳不稳" hint="四格取的年份变了，估计也会变。">
+            <div className="mb-2 flex flex-wrap gap-2">
               {DID_YEARS.filter((y) => y < OPEN_YEAR).map((y) => (
                 <Chip
                   key={y}
                   active={preYear === y}
                   onClick={() => {
                     setPreYear(y);
-                    track("挑选对照", "事前年份", String(y));
+                    track("搭出双重差分", "事前年份", String(y));
                   }}
                 >
                   事前取 {y}
                 </Chip>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Tile label={`通车街区 ${preYear}`} value={t0} tone="copper" />
-              <Tile label={`对照 ${preYear}`} value={c0} tone="teal" />
-              <Tile label="水平差" value={levelGap} unit="万元" />
-              <Tile label="通车前斜率差" value={parallelGap} tone={parallelGap > 0.06 ? "rose" : "teal"} />
+            <div className="mb-3 flex flex-wrap gap-2">
+              {DID_YEARS.filter((y) => y > OPEN_YEAR).map((y) => (
+                <Chip
+                  key={y}
+                  tone="teal"
+                  active={postYear === y}
+                  onClick={() => {
+                    setPostYear(y);
+                    track("搭出双重差分", "事后年份", String(y));
+                  }}
+                >
+                  事后取 {y}
+                </Chip>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <Tile label="通车街区变化" value={box.treatedChange} unit="万元" tone="copper" />
+              <Tile label="对照变化" value={box.controlChange} unit="万元" tone="teal" />
+              <Tile label="双重差分" value={box.att} unit="万元" />
             </div>
           </Panel>
+
           {hasTrap && (
-            <Callout tone="rose">金贸是商务中心、机场边在扩建，通车前趋势就跟通车街区不一样，会把估计带偏。</Callout>
+            <Callout tone="rose">选中的对照里有陷阱街区，它们通车前的走势本来就不一样，借来的「大势」是假的。</Callout>
           )}
         </>
       )}
+
 
       {step === 2 && (
         <>
