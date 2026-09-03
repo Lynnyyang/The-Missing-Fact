@@ -525,12 +525,20 @@ function BasicsLesson() {
                   <>随机分组下，参加营的人本来也没比没参加的人高多少，观测差 {fmt(naiveStat.obs)} 分接近真实效应。</>
                 ) : (
                   <>
-                    <strong>
-                      {naiveMode === "highY0" ? "成绩好的学生优先参加" : "觉得自己进步大的学生优先参加"}
-                    </strong>
-                    ，参加营的人就算不来，平均分也比没参加的人高{" "}
-                    <span className="num text-copper">{fmt(Math.abs(naiveStat.selection))}</span> 分。
-                    所以 {fmt(naiveStat.obs)} 分的观测差里，只有 {fmt(naiveStat.att)} 分是营的效应，其余是底子差。
+                    <strong>{naiveMode === "highY0" ? "成绩好的学生优先参加" : "成绩差的学生优先参加"}</strong>
+                    ，参加营的人就算不来，平均分
+                    {naiveStat.selection > 0.5 ? (
+                      <>
+                        比没参加的人高 <span className="num text-copper">{fmt(naiveStat.selection)}</span> 分
+                      </>
+                    ) : naiveStat.selection < -0.5 ? (
+                      <>
+                        比没参加的人低 <span className="num text-copper">{fmt(Math.abs(naiveStat.selection))}</span> 分
+                      </>
+                    ) : (
+                      "和没参加的人差不多"
+                    )}
+                    。所以 {fmt(naiveStat.obs)} 分的观测差里，只有 {fmt(naiveStat.att)} 分是营的效应，其余是底子差。
                   </>
                 )}
               </Callout>
