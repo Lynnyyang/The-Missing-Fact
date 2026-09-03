@@ -586,7 +586,7 @@ function DidLesson() {
             </p>
           </Panel>
 
-          <Panel title="一步步算" hint="四格先各自相减，再把两个差相减。">
+          <Panel title="一步步算" hint="两个变化相减，就是双重差分。">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label={`通车街区 ${preYear}`} value={t0} tone="copper" />
               <Tile label={`通车街区 ${postYear}`} value={t1} tone="copper" />
@@ -607,16 +607,10 @@ function DidLesson() {
                 </div>
               </div>
               <div className="panel px-3 py-2">
-                <div className="text-[11px] text-muted-foreground">第三步：补出缺的那一格（若不通车的事后水平）</div>
+                <div className="text-[11px] text-muted-foreground">第三步：两个变化相减，得到通车多出来的部分</div>
                 <div className="num mt-1">
-                  {fmt(t0)} + {fmt(box.controlChange)} = <span className="text-rose">{fmt(box.counterfactual)}</span>
-                </div>
-              </div>
-              <div className="panel px-3 py-2">
-                <div className="text-[11px] text-muted-foreground">第四步：双重差分＝事后实际 − 反事实＝两个变化之差</div>
-                <div className="num mt-1">
-                  {fmt(t1)} − {fmt(box.counterfactual)} = {fmt(box.treatedChange)} − {fmt(box.controlChange)} ={" "}
-                  <span className="text-copper">{effectRevealed ? fmt(box.att) : "先猜后显示"}</span>
+                  {fmt(box.treatedChange)} − {fmt(box.controlChange)} ={" "}
+                  <span className="text-copper">{effectRevealed ? fmt(box.att) : "先猜后显示"}</span> 万元/平方米
                 </div>
               </div>
             </div>
