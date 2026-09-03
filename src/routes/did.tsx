@@ -238,7 +238,7 @@ function DidLesson() {
       通车前趋势起算年: trendStart,
       通车前年斜率差: fmt(parallelGap, 3),
       对齐水平开关: alignLevel ? "已把对照线平移到同一水平" : "关",
-      参考线（反事实）: showCf ? "开" : "关（默认）",
+      "参考线（反事实）": showCf ? "开" : "关（默认）",
       用户拖的反事实端点: cfDrawn ? fmt(cfValue) : "还没拖",
       安慰剂通车年: fakeYear,
       安慰剂缺口: fmt(fakeBox.att),
