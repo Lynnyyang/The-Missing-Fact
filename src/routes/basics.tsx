@@ -150,15 +150,15 @@ function BasicsLesson() {
   };
   if (step === 1) {
     facts["选中的人"] = p.name;
-    facts["参加后的结果 Y(1)"] = p.y1;
-    facts["不参加的结果 Y(0)"] = p.y0;
-    facts["个体因果效应"] = fmt(p.effect);
+    facts["参加提升营的期末成绩 Y(1)"] = p.y1;
+    facts["没参加提升营的期末成绩 Y(0)"] = p.y0;
+    facts["提升营让他多考几分（个体效应）"] = fmt(p.effect);
     facts["全体平均效应 ATE"] = fmt(ate);
   }
   if (step === 3) {
     facts["第几次掷硬币"] = coinSeed;
-    facts["参加组观测均值"] = fmt(coin.obsT);
-    facts["没参加组观测均值"] = fmt(coin.obsC);
+    facts["参加营组观测均值"] = fmt(coin.obsT);
+    facts["没参加营组观测均值"] = fmt(coin.obsC);
     facts["观测到的均值差"] = fmt(coin.obs);
     facts["全体平均效应 ATE"] = fmt(ate);
     facts["选择偏差"] = fmt(coin.selection);
@@ -167,7 +167,7 @@ function BasicsLesson() {
   if (step === 4) {
     facts["自选倾向"] = fmt(bias);
     facts["观测到的均值差"] = fmt(biased.obs);
-    facts["参加者的平均效应 ATT"] = fmt(biased.att);
+    facts["参加营者的平均效应 ATT"] = fmt(biased.att);
     facts["选择偏差"] = fmt(biased.selection);
     facts["缺失的一半是否隐藏"] = hideMissing ? "隐藏" : "显示";
   }
@@ -178,9 +178,9 @@ function BasicsLesson() {
     facts,
     hints:
       step === 0
-        ? ["每张牌背后有两格结果，现实里只能看到一格。"]
+        ? ["每张牌背后有两格期末成绩：参加提升营的 Y(1) 与没参加提升营的 Y(0)。"]
         : step === 1
-          ? ["个体因果效应＝同一个人两格之差，永远算不出来，只能假设。"]
+          ? ["提升营让这个人多考的分数＝Y(1) − Y(0)，现实里永远只观测到其中一格。"]
           : step === 3
             ? Math.abs(coin.selection) > 3
               ? ["这一次掷硬币两组底子差得有点多，再掷一次或连掷多次看看。"]
@@ -202,9 +202,31 @@ function BasicsLesson() {
     >
       {step === 0 && (
         <>
+          <Panel title="情景：暑期数学提升营">
+            <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+              <p>
+                10 名初一学生刚结束学期。学校开设了一个<strong>暑期数学提升营</strong>，为期 4 周。
+                我们想知道：参加这个营，会让期末数学测验成绩提高多少分？
+              </p>
+              <p>对每个学生，其实都有两个可能的期末成绩：</p>
+              <ul className="ml-4 list-disc space-y-1">
+                <li>
+                  <strong className="text-teal">Y(1)</strong>：参加提升营后的期末成绩
+                </li>
+                <li>
+                  <strong className="text-muted-foreground">Y(0)</strong>：没参加提升营的期末成绩
+                </li>
+              </ul>
+              <p>
+                现实里，每个学生只能走其中一条路。另一格成绩永远不会被观测到——这就是因果推断里著名的
+                <strong>缺失的反事实</strong>。
+              </p>
+            </div>
+          </Panel>
+
           <Panel
-            title="每个人都有两格结果"
-            hint="点一张牌翻开：左边是他参加项目后的结果 Y(1)，右边是他不参加的结果 Y(0)。教学数据里两格都写好了，现实里只有一格会发生。"
+            title="翻牌看两格期末成绩"
+            hint="点一张牌翻开：左边是他参加提升营后的期末成绩 Y(1)，右边是他没参加提升营的期末成绩 Y(0)。教学数据里两格都写好了，现实里只有一格会发生。"
             right={
               <Chip
                 onClick={() => {
@@ -236,9 +258,9 @@ function BasicsLesson() {
                     <div className="text-xs font-medium">{q.name}</div>
                     {open ? (
                       <div className="num mt-1 space-y-0.5 text-[11px]">
-                        <div className="text-teal">参加 {fmt(q.y1, 1)}</div>
-                        <div className="text-muted-foreground">不参加 {fmt(q.y0, 1)}</div>
-                        <div className="text-copper">差 {fmt(q.effect, 1)}</div>
+                        <div className="text-teal">参加营 {fmt(q.y1, 1)}</div>
+                        <div className="text-muted-foreground">不参加营 {fmt(q.y0, 1)}</div>
+                        <div className="text-copper">提高 {fmt(q.effect, 1)}</div>
                       </div>
                     ) : (
                       <div className="mt-1 text-[11px] text-muted-foreground">点开看两格</div>
@@ -267,10 +289,10 @@ function BasicsLesson() {
                     <div className="text-xs">{q.name}</div>
                     <div className="num mt-1 space-y-0.5 text-[11px]">
                       <div className={treated ? "text-teal" : "text-muted-foreground"}>
-                        参加 {treated || godMode ? fmt(q.y1, 1) : "？"}
+                        参加营 {treated || godMode ? fmt(q.y1, 1) : "？"}
                       </div>
                       <div className={!treated ? "text-teal" : "text-muted-foreground"}>
-                        不参加 {!treated || godMode ? fmt(q.y0, 1) : "？"}
+                        不参加营 {!treated || godMode ? fmt(q.y0, 1) : "？"}
                       </div>
                     </div>
                   </div>
@@ -278,8 +300,8 @@ function BasicsLesson() {
               })}
             </div>
             <Callout>
-              这就是全部困难所在：<strong>同一个人不能同时参加又不参加</strong>
-              。每个问号都是一段没发生的人生，方法课要做的事，就是替这些问号找个合理的替身。
+              这就是全部困难所在：<strong>同一个人不能同时参加提升营又不参加提升营</strong>
+              。每个问号都是一段没发生的期末成绩，方法课要做的事，就是替这些问号找个合理的替身。
             </Callout>
           </Panel>
         </>
@@ -287,7 +309,7 @@ function BasicsLesson() {
 
       {step === 1 && (
         <>
-          <Panel title="个体因果效应＝两格之差" hint="拖滑杆换人，看同一个人两格之间的距离。">
+          <Panel title="提升营让他多考几分？" hint="拖滑杆换人，看同一个人两格期末成绩之间的距离。">
             <Dial
               label="看谁"
               value={who}
@@ -300,14 +322,14 @@ function BasicsLesson() {
               hint={`当前：${p.name}`}
             />
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Tile label="参加后的结果 Y(1)" value={p.y1} tone="teal" />
-              <Tile label="不参加的结果 Y(0)" value={p.y0} />
-              <Tile label="个体因果效应" value={p.effect} tone="copper" sub="Y(1) − Y(0)" />
+              <Tile label="参加营的期末成绩 Y(1)" value={p.y1} tone="teal" />
+              <Tile label="不参加营的期末成绩 Y(0)" value={p.y0} />
+              <Tile label="提升营让他多考几分" value={p.effect} tone="copper" sub="Y(1) − Y(0)" />
               <Tile label="全体平均效应 ATE" value={ate} sub="十个人的效应平均" />
             </div>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-              公式只有一行：个体因果效应 ＝ Y(1) − Y(0)。它对每个人都不一样，
-              {p.name} 是 {fmt(p.effect, 1)}，而全体平均是 {fmt(ate)}。
+              公式只有一行：提升营对{p.name}的效应 ＝ Y(1) − Y(0) ＝ {fmt(p.effect, 1)} 分。它对每个人都不一样，
+              全体平均是 {fmt(ate)} 分。
               现实里我们永远只观测到其中一格，所以这一行公式没法直接算 —— 能算的只有平均。
             </p>
           </Panel>
@@ -356,14 +378,14 @@ function BasicsLesson() {
 
       {step === 2 && (
         <>
-          <Panel title="能拿到的数据长什么样" hint="现实数据只有一列结果，加一列「参加了没有」。">
+          <Panel title="能拿到的数据长什么样" hint="现实数据只有一列期末成绩，加一列「参加提升营了没有」。">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="text-muted-foreground">
                   <tr>
                     <th className="py-1.5">人</th>
-                    <th className="py-1.5">参加了没有</th>
-                    <th className="py-1.5">观测到的结果</th>
+                    <th className="py-1.5">参加营了没有</th>
+                    <th className="py-1.5">观测到的期末成绩</th>
                     <th className="py-1.5">没发生的那一格</th>
                   </tr>
                 </thead>
@@ -373,7 +395,7 @@ function BasicsLesson() {
                     return (
                       <tr key={q.id} className="border-t border-border/60">
                         <td className="py-1.5 font-sans">{q.name}</td>
-                        <td className="py-1.5 font-sans">{treated ? "参加" : "没参加"}</td>
+                        <td className="py-1.5 font-sans">{treated ? "参加营" : "没参加营"}</td>
                         <td className="py-1.5 text-teal">{fmt(treated ? q.y1 : q.y0, 1)}</td>
                         <td className="py-1.5 text-rose">？</td>
                       </tr>
@@ -389,11 +411,11 @@ function BasicsLesson() {
           </Panel>
 
           <Quiz
-            question="为什么不能直接用「参加者的结果 − 没参加者的结果」当成因果效应？"
+            question="为什么不能直接用「参加营者的期末成绩 − 没参加营者的期末成绩」当成提升营的因果效应？"
             options={[
               "因为样本太小，多找些人就准了",
               "因为两组人本来的 Y(0) 可能就不一样，差里混着他们原来的差距",
-              "因为结果测量有误差",
+              "因为成绩测量有误差",
             ]}
             answer={1}
             onAnswer={(ok) => track("缺失的一半", "小测", ok ? "答对" : "答错")}
@@ -404,7 +426,7 @@ function BasicsLesson() {
       {step === 3 && (
         <>
           <Panel
-            title="掷硬币决定谁参加"
+            title="掷硬币决定谁参加营"
             hint="随机分组不会让缺失的格子出现，但它让两组人的底子平均上一样，于是观测差近似 ATE。"
             right={
               <div className="flex gap-2">
@@ -430,8 +452,8 @@ function BasicsLesson() {
             }
           >
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Tile label="参加组观测均值" value={coin.obsT} tone="teal" />
-              <Tile label="没参加组观测均值" value={coin.obsC} />
+              <Tile label="参加营组观测均值" value={coin.obsT} tone="teal" />
+              <Tile label="没参加营组观测均值" value={coin.obsC} />
               <Tile label="观测到的均值差" value={coin.obs} tone="copper" />
               <Tile label="全体平均效应 ATE" value={ate} sub="教学数据里的真值" />
             </div>
@@ -447,7 +469,7 @@ function BasicsLesson() {
                 >
                   <div className="text-xs">{r.p.name}</div>
                   <div className="num text-[11px] text-muted-foreground">
-                    {r.treated ? "参加" : "没参加"} {fmt(r.treated ? r.p.y1 : r.p.y0, 1)}
+                    {r.treated ? "参加营" : "没参加营"} {fmt(r.treated ? r.p.y1 : r.p.y0, 1)}
                   </div>
                 </div>
               ))}
@@ -490,7 +512,7 @@ function BasicsLesson() {
         <>
           <Panel
             title="换成自己报名，差就脏了"
-            hint="把滑杆往右拖：越靠右，越是「觉得自己受益大的人才报名」。"
+            hint="把滑杆往右拖：越靠右，越是「觉得自己受益大的人才报名参营」。"
           >
             <Dial
               label="自选倾向（0＝掷硬币，1＝完全自己挑）"
@@ -505,7 +527,7 @@ function BasicsLesson() {
             />
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="观测到的均值差" value={biased.obs} tone="copper" />
-              <Tile label="参加者的平均效应 ATT" value={biased.att} tone="teal" />
+              <Tile label="参加营者的平均效应 ATT" value={biased.att} tone="teal" />
               <Tile label="选择偏差" value={biased.selection} tone="rose" sub="两组本来的底子差" />
               <Tile label="全体平均效应 ATE" value={ate} />
             </div>
@@ -514,7 +536,7 @@ function BasicsLesson() {
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               分解式左右两边永远相等。掷硬币时右边第二项被压到 0 附近，观测差才能当效应读；
-              一旦谁参加是自己挑的，观测差里就多了一块跟政策无关的底子差。
+              一旦谁参加营是自己挑的，观测差里就多了一块跟提升营无关的底子差。
             </p>
           </Panel>
 
@@ -540,7 +562,7 @@ function BasicsLesson() {
                 >
                   <div className="text-xs">{r.p.name}</div>
                   <div className="num text-[11px] text-muted-foreground">
-                    {r.treated ? "参加" : "没参加"} {fmt(r.treated ? r.p.y1 : r.p.y0, 1)}
+                    {r.treated ? "参加营" : "没参加营"} {fmt(r.treated ? r.p.y1 : r.p.y0, 1)}
                   </div>
                   <div className="num text-[11px]">
                     {hideMissing ? (
