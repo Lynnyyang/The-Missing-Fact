@@ -427,7 +427,7 @@ function SynthLesson() {
                   </ResponsiveContainer>
                 </div>
                 <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                  注意：这里的柱子按**缺口大小**排队，而第三步的表按**|缺口|÷拟合误差**排队，所以两处的顺序和排名本来就会不同——第二步只看缺口，第三步把拟合质量也算进去。
+                  注意：这里的柱子按 <span className="text-copper">缺口本身</span> 排队；第三步的表按 <span className="text-copper">|缺口| ÷ 改气前拟合误差</span> 排队。两处用的是同一批城市、同一组数字，但排序口径不同，所以顺序和排名不一样。
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                   <Tile label="岚城缺口" value={gapNow} unit="μg/m³" tone="copper" />
