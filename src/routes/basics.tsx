@@ -234,7 +234,7 @@ function BasicsLesson() {
               ? [
                   `观测差 ${fmt(naiveStat.obs)} 分＝真实效应 ATT ${fmt(naiveStat.att)} 分＋选择偏差 ${fmt(naiveStat.selection)} 分。`,
                 ]
-              : ["打开上帝视角，看看参加营的人如果没来，平均分是不是也比没参加的人高。"]
+              : ["打开上帝视角，看看参加营的人如果没来，平均分与没参加的人差多少——这就是选择偏差。"]
             : step === 3
 
             ? Math.abs(coin.selection) > 3
