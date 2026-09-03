@@ -348,11 +348,11 @@ function DidLesson() {
             </div>
           </Panel>
 
-          <Panel title="一格一格搭出来" hint="点「下一步」，看着四格怎么变成一个估计。">
+          <Panel title="一格一格搭出来" hint="点「下一步」，看着两个变化怎么变成一个估计。">
             <div className="mb-3 flex flex-wrap gap-2">
               <Chip
                 onClick={() => {
-                  const s = Math.min(4, buildStage + 1);
+                  const s = Math.min(3, buildStage + 1);
                   setBuildStage(s);
                   track("搭出双重差分", "搭建进度", `第 ${s} 步`);
                 }}
@@ -368,7 +368,7 @@ function DidLesson() {
               >
                 重来
               </Chip>
-              <span className="self-center text-[11px] text-muted-foreground">进度 {buildStage} / 4</span>
+              <span className="self-center text-[11px] text-muted-foreground">进度 {buildStage} / 3</span>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label={`通车街区 ${preYear}`} value={t0} tone="copper" />
@@ -395,17 +395,9 @@ function DidLesson() {
               )}
               {buildStage >= 3 && (
                 <div className="panel px-3 py-2">
-                  <div className="text-[11px] text-muted-foreground">第三步：补出缺的那一格（若不通车的事后水平）</div>
+                  <div className="text-[11px] text-muted-foreground">第三步：两个变化相减，就是双重差分</div>
                   <div className="num mt-1">
-                    {fmt(t0)} + {fmt(box.controlChange)} = <span className="text-rose">{fmt(box.counterfactual)}</span>
-                  </div>
-                </div>
-              )}
-              {buildStage >= 4 && (
-                <div className="panel px-3 py-2">
-                  <div className="text-[11px] text-muted-foreground">第四步：事后实际 − 反事实，就是双重差分</div>
-                  <div className="num mt-1">
-                    {fmt(t1)} − {fmt(box.counterfactual)} = <span className="text-copper">{fmt(box.att)}</span>
+                    {fmt(box.treatedChange)} − {fmt(box.controlChange)} = <span className="text-copper">{fmt(box.att)}</span>
                   </div>
                 </div>
               )}
