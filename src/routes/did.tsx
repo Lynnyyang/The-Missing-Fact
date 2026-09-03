@@ -113,7 +113,7 @@ function DidLesson() {
   const [trendStart, setTrendStart] = useState(2014);
   const [alignLevel, setAlignLevel] = useState(false);
   const [showEach, setShowEach] = useState(false);
-  const [showCf, setShowCf] = useState(true);
+  const [showCf, setShowCf] = useState(false);
   const [effectRevealed, setEffectRevealed] = useState(false);
   const [compareMode, setCompareMode] = useState<"post" | "prepost" | "did">("post");
   const [buildStage, setBuildStage] = useState(0);
@@ -163,9 +163,11 @@ function DidLesson() {
   });
 
   const cfValue = cfDrag || t0;
+  const tOpen = avg(treated, OPEN_YEAR);
+  const cOpen = chosen.length ? avg(chosen, OPEN_YEAR) : 0;
   const cfData = DID_YEARS.map((y) => {
     const cAvg = chosen.length ? avg(chosen, y) : 0;
-    const cf = y >= preYear && chosen.length ? Math.round((t0 + (cAvg - c0)) * 100) / 100 : null;
+    const cf = y >= OPEN_YEAR && chosen.length ? Math.round((tOpen + (cAvg - cOpen)) * 100) / 100 : null;
     return {
       year: String(y),
       通车街区: Math.round(avg(treated, y) * 100) / 100,
@@ -565,11 +567,11 @@ function DidLesson() {
                 </Chip>
               ))}
               <Toggle
-                label="显示反事实虚线"
+                label="参考线（按对照涨幅补出的反事实）"
                 checked={showCf}
                 onChange={(v) => {
                   setShowCf(v);
-                  track("画出反事实", "反事实虚线", v ? "显示" : "隐藏");
+                  track("画出反事实", "参考线", v ? "开" : "关");
                 }}
               />
             </div>
