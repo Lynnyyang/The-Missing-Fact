@@ -43,7 +43,7 @@ export function makeStudents(seed = 20240901, n = 160): Student[] {
   return list;
 }
 
-/* ---------------- 第二课：碣石渡免票（事前事后） ---------------- */
+/* ---------------- 第二课：碧石渡免票（事前事后） ---------------- */
 
 export type FerryPoint = {
   t: number; // 距离 2015-01 的月数
