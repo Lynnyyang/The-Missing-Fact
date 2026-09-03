@@ -344,7 +344,9 @@ function SynthLesson() {
           unit="μg/m³"
           truth={gapNow}
           tolerance={4}
+          onReveal={() => setGapRevealed(true)}
           onResolve={(g, ok) => track("对照轨迹", "先猜再对照", `猜 ${fmt(g, 1)}，${ok ? "在容差内" : "偏了"}`)}
+
         />
       )}
 
