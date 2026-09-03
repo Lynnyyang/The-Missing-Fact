@@ -237,6 +237,7 @@ function DidLesson() {
       通车前年斜率差: fmt(parallelGap, 3),
       对齐水平开关: alignLevel ? "已把对照线平移到同一水平" : "关",
       反事实虚线: showCf ? "显示" : "隐藏",
+      用户拖的反事实端点: cfDrawn ? fmt(cfValue) : "还没拖",
       安慰剂通车年: fakeYear,
       安慰剂缺口: fmt(fakeBox.att),
       当前比法: compareMode === "post" ? "只比事后两组" : compareMode === "prepost" ? "只比通车街区前后" : "双重差分",
