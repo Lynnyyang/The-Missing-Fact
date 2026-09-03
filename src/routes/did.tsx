@@ -38,7 +38,7 @@ export const Route = createFileRoute("/did")({
 
 const STEPS: Step[] = [
   { id: "did-1", title: "了解情况" },
-  { id: "did-2", title: "挑选对照" },
+  { id: "did-2", title: "搭出双重差分" },
   { id: "did-3", title: "平行趋势" },
   { id: "did-4", title: "画出反事实" },
   { id: "did-5", title: "逐年检查" },
@@ -115,6 +115,8 @@ function DidLesson() {
   const [showEach, setShowEach] = useState(false);
   const [showCf, setShowCf] = useState(true);
   const [effectRevealed, setEffectRevealed] = useState(false);
+  const [compareMode, setCompareMode] = useState<"post" | "prepost" | "did">("post");
+  const [buildStage, setBuildStage] = useState(0);
 
   const blocks = useMemo(() => makeBlocks(), []);
   const treated = blocks.filter((b) => b.treated);
@@ -134,6 +136,15 @@ function DidLesson() {
   const slopeC = chosen.length ? fitLine(preYears, preYears.map((y) => avg(chosen, y))).b : 0;
   const parallelGap = Math.abs(slopeT - slopeC);
   const hasTrap = chosen.some((b) => b.trap);
+
+  const compareValue =
+    compareMode === "post" ? t1 - c1 : compareMode === "prepost" ? box.treatedChange : box.att;
+  const compareNote =
+    compareMode === "post"
+      ? `只比事后两组，等于把通车前本来就有的 ${fmt(Math.abs(levelGap))} 万元水平差也算成了通车的功劳。`
+      : compareMode === "prepost"
+        ? `只比通车街区自己的前后，等于把全城同期的涨幅 ${fmt(box.controlChange)} 万元也算了进来。`
+        : `双重差分把固定的水平差和同期的大势各减掉一次，剩下的 ${fmt(box.att)} 万元才是通车多出来的部分。`;
 
   const shift = alignLevel ? t0 - c0 : 0;
   const trendData = DID_YEARS.map((y) => {
@@ -217,6 +228,9 @@ function DidLesson() {
       反事实虚线: showCf ? "显示" : "隐藏",
       安慰剂通车年: fakeYear,
       安慰剂缺口: fmt(fakeBox.att),
+      当前比法: compareMode === "post" ? "只比事后两组" : compareMode === "prepost" ? "只比通车街区前后" : "双重差分",
+      当前比法给出的数: fmt(compareValue),
+      "一格一格搭进度（0-4）": buildStage,
       对照里是否含陷阱街区: hasTrap ? "含（金贸或机场边）" : "不含",
     },
     hints: hints.length ? hints : ["点街区加减对照，四格和反事实虚线会立刻重算。"],
