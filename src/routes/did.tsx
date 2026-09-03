@@ -344,7 +344,7 @@ function DidLesson() {
               <Tile label="对照同期涨幅" value={box.controlChange} unit="万元" tone="teal" />
             </div>
             <div className="mt-3">
-              <Callout tone={compareMode === "did" ? "default" : "rose"}>{compareNote}</Callout>
+              <Callout tone={compareMode === "did" ? "copper" : "rose"}>{compareNote}</Callout>
             </div>
           </Panel>
 
