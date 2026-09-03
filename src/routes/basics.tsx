@@ -141,8 +141,17 @@ function BasicsLesson() {
     return people.map((p) => ({ p, treated: treated.has(p.id) }));
   }, [people, naiveMode, naiveSeed]);
   const naiveStat = useMemo(() => stat(naiveRows), [naiveRows]);
+  const naiveMeanBars = useMemo(
+    () => [
+      { name: "没参加营", value: naiveStat.obsC, key: "control" as const },
+      { name: "参加营若没来", value: naiveStat.obsC + naiveStat.selection, key: "counter" as const },
+      { name: "参加营", value: naiveStat.obsT, key: "treated" as const },
+    ],
+    [naiveStat],
+  );
 
   const effectBars = useMemo(() => {
+
 
     const list = people.map((p) => ({ name: p.name, v: p.effect, id: p.id }));
     return sorted ? [...list].sort((a, b) => b.v - a.v) : list;
