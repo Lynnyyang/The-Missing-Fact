@@ -45,9 +45,9 @@ const LESSONS = [
   },
   {
     to: "/synth" as const,
-    name: "岚城煤改气",
+    name: "安城煤改气",
     method: "合成控制",
-    story: "只有一座城被处理，用一篮子城市加权拼一个岚城。",
+    story: "只有一座城被处理，用一篮子城市加权拼一个安城。",
     key: "synth",
   },
 ];
