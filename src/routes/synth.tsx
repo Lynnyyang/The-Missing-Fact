@@ -124,6 +124,12 @@ function SynthLesson() {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
 
+  // 改动权重、供体或换步骤，都重新藏起缺口，让学生先猜
+  useEffect(() => {
+    setGapRevealed(false);
+  }, [step, on, weights]);
+
+
   function autoFit() {
     const fit = fitSynth(
       target.pm.slice(0, PRE_LEN),
