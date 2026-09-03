@@ -548,17 +548,20 @@ function BasicsLesson() {
                   </tr>
                 </thead>
                 <tbody className="num">
-                  {people.map((q, i) => {
-                    const treated = i % 2 === 0;
-                    return (
-                      <tr key={q.id} className="border-t border-border/60">
-                        <td className="py-1.5 font-sans">{q.name}</td>
-                        <td className="py-1.5 font-sans">{treated ? "参加营" : "没参加营"}</td>
-                        <td className="py-1.5 text-teal">{fmt(treated ? q.y1 : q.y0, 1)}</td>
-                        <td className="py-1.5 text-rose">？</td>
-                      </tr>
-                    );
-                  })}
+                  {naiveRows.map((r) => (
+                    <tr key={r.p.id} className="border-t border-border/60">
+                      <td className="py-1.5 font-sans">{r.p.name}</td>
+                      <td className="py-1.5 font-sans">{r.treated ? "参加营" : "没参加营"}</td>
+                      <td className="py-1.5 text-teal">{fmt(r.treated ? r.p.y1 : r.p.y0, 1)}</td>
+                      <td className="py-1.5">
+                        {naiveGodMode ? (
+                          <span className="text-rose">{fmt(r.treated ? r.p.y0 : r.p.y1, 1)}</span>
+                        ) : (
+                          <span className="text-rose">？</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
