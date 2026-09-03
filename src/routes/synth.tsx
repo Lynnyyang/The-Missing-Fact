@@ -56,6 +56,8 @@ function SynthLesson() {
   const [on, setOn] = useState<string[]>(donorsAll.filter((d) => !d.alreadyTreated).map((d) => d.key));
   const [weights, setWeights] = useState<Record<string, number>>({});
   const [placebo, setPlacebo] = useState<string | null>(null);
+  const [ranAll, setRanAll] = useState(false);
+  const [showAllPaths, setShowAllPaths] = useState(false);
 
   const donors = donorsAll.filter((d) => on.includes(d.key));
   const badIncluded = donors.filter((d) => d.alreadyTreated);
