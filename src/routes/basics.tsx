@@ -181,7 +181,19 @@ function BasicsLesson() {
     facts["提升营让他多考几分（个体效应）"] = fmt(p.effect);
     facts["全体平均效应 ATE"] = fmt(ate);
   }
+  if (step === 2) {
+    facts["分组方式"] =
+      naiveMode === "random" ? "随机分组" : naiveMode === "highY0" ? "成绩好的优先参加" : "觉得自己进步大的优先";
+    facts["上帝视角"] = naiveGodMode ? "打开" : "关闭";
+    facts["参加营者观测均值"] = fmt(naiveStat.obsT);
+    facts["没参加营者观测均值"] = fmt(naiveStat.obsC);
+    facts["观测到的均值差"] = fmt(naiveStat.obs);
+    facts["参加营者若没参加的均值"] = naiveGodMode ? fmt(naiveStat.obsC + naiveStat.selection) : "？";
+    facts["选择偏差"] = naiveGodMode ? fmt(naiveStat.selection) : "？";
+    facts["全体平均效应 ATE"] = fmt(ate);
+  }
   if (step === 3) {
+
     facts["第几次掷硬币"] = coinSeed;
     facts["参加营组观测均值"] = fmt(coin.obsT);
     facts["没参加营组观测均值"] = fmt(coin.obsC);
