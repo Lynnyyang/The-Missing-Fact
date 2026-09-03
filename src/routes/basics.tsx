@@ -123,7 +123,27 @@ function BasicsLesson() {
   const coin = stat(coinRows);
   const biased = stat(biasRows);
 
+  const naiveRows = useMemo(() => {
+    if (naiveMode === "random") {
+      const rand = rng(8000 + naiveSeed * 3333);
+      const scored = people.map((p) => ({ p, score: rand() }));
+      scored.sort((a, b) => b.score - a.score);
+      const treated = new Set(scored.slice(0, Math.round(people.length / 2)).map((x) => x.p.id));
+      return people.map((p) => ({ p, treated: treated.has(p.id) }));
+    }
+    if (naiveMode === "highY0") {
+      const sorted = [...people].sort((a, b) => b.y0 - a.y0);
+      const treated = new Set(sorted.slice(0, Math.round(people.length / 2)).map((p) => p.id));
+      return people.map((p) => ({ p, treated: treated.has(p.id) }));
+    }
+    const sorted = [...people].sort((a, b) => b.effect - a.effect);
+    const treated = new Set(sorted.slice(0, Math.round(people.length / 2)).map((p) => p.id));
+    return people.map((p) => ({ p, treated: treated.has(p.id) }));
+  }, [people, naiveMode, naiveSeed]);
+  const naiveStat = useMemo(() => stat(naiveRows), [naiveRows]);
+
   const effectBars = useMemo(() => {
+
     const list = people.map((p) => ({ name: p.name, v: p.effect, id: p.id }));
     return sorted ? [...list].sort((a, b) => b.v - a.v) : list;
   }, [people, sorted]);
