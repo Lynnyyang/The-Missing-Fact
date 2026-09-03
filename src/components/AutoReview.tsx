@@ -29,9 +29,23 @@ export function AutoReview({ page = "小结" }: { page?: string } = {}) {
           llm,
         }),
       });
-      const data = (await res.json()) as { reply?: string; error?: string };
-      if (!res.ok || data.error) setError(data.error ?? "小果暂时没答上来。");
-      else setReply(data.reply ?? "");
+      const ct = res.headers.get("Content-Type") ?? "";
+      if (!res.ok || !res.body || ct.includes("application/json")) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? "小果暂时没答上来。");
+        return;
+      }
+      setReply("");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let acc = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        setReply(acc);
+      }
+      if (!acc.trim()) setReply("小果没能整理出话来，可以点「重新点评」。");
     } catch {
       setError("网络没通，稍后可以重新生成。");
     } finally {
