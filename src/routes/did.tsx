@@ -41,7 +41,7 @@ const STEPS: Step[] = [
   { id: "did-2", title: "搭出双重差分" },
   { id: "did-4", title: "画出反事实" },
   { id: "did-3", title: "平行趋势" },
-  { id: "did-5", title: "逐年检查" },
+  { id: "did-5", title: "安慰剂实验" },
   { id: "did-6", title: "小结" },
 ];
 
@@ -731,7 +731,7 @@ function DidLesson() {
                   tone={y < OPEN_YEAR ? "rose" : "copper"}
                   onClick={() => {
                     setFakeYear(y);
-                    track("逐年检查", "假的通车年", String(y));
+                    track("安慰剂实验", "假的通车年", String(y));
                   }}
                 >
                   {y}
