@@ -220,7 +220,7 @@ function DidLesson() {
       通车前水平差: fmt(levelGap),
       通车街区这段时间的变化: fmt(box.treatedChange),
       对照这段时间的变化: fmt(box.controlChange),
-      "若不通车的那一格（反事实）": fmt(box.counterfactual),
+      "反事实事后房价（通车街区若不通车）": fmt(box.counterfactual),
       "双重差分估计 ATT": effectRevealed ? fmt(box.att) : "未揭示（等待用户先猜）",
       通车前趋势起算年: trendStart,
       通车前年斜率差: fmt(parallelGap, 3),
@@ -230,10 +230,10 @@ function DidLesson() {
       安慰剂缺口: fmt(fakeBox.att),
       当前比法: compareMode === "post" ? "只比事后两组" : compareMode === "prepost" ? "只比通车街区前后" : "双重差分",
       当前比法给出的数: fmt(compareValue),
-      "一格一格搭进度（0-4）": buildStage,
+      "一格一格搭进度（0-3）": buildStage,
       对照里是否含陷阱街区: hasTrap ? "含（金贸或机场边）" : "不含",
     },
-    hints: hints.length ? hints : ["点街区加减对照，四格和反事实虚线会立刻重算。"],
+    hints: hints.length ? hints : ["点街区加减对照，趋势线和估计会立刻重算。"],
   });
 
   const togglePick = (b: Block) => {
@@ -245,7 +245,7 @@ function DidLesson() {
   return (
     <LessonShell
       lesson="银线通车"
-      subtitle="双重差分：用对照街区的变化，补出通车街区若不通车的那一格"
+      subtitle="双重差分：用对照街区的变化，减掉通车街区里同期的大势"
       steps={STEPS}
       step={step}
       onStep={setStep}
@@ -348,11 +348,11 @@ function DidLesson() {
             </div>
           </Panel>
 
-          <Panel title="一格一格搭出来" hint="点「下一步」，看着四格怎么变成一个估计。">
+          <Panel title="一格一格搭出来" hint="点「下一步」，看着两个变化怎么变成一个估计。">
             <div className="mb-3 flex flex-wrap gap-2">
               <Chip
                 onClick={() => {
-                  const s = Math.min(4, buildStage + 1);
+                  const s = Math.min(3, buildStage + 1);
                   setBuildStage(s);
                   track("搭出双重差分", "搭建进度", `第 ${s} 步`);
                 }}
@@ -368,7 +368,7 @@ function DidLesson() {
               >
                 重来
               </Chip>
-              <span className="self-center text-[11px] text-muted-foreground">进度 {buildStage} / 4</span>
+              <span className="self-center text-[11px] text-muted-foreground">进度 {buildStage} / 3</span>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label={`通车街区 ${preYear}`} value={t0} tone="copper" />
@@ -395,17 +395,9 @@ function DidLesson() {
               )}
               {buildStage >= 3 && (
                 <div className="panel px-3 py-2">
-                  <div className="text-[11px] text-muted-foreground">第三步：补出缺的那一格（若不通车的事后水平）</div>
+                  <div className="text-[11px] text-muted-foreground">第三步：两个变化相减，就是双重差分</div>
                   <div className="num mt-1">
-                    {fmt(t0)} + {fmt(box.controlChange)} = <span className="text-rose">{fmt(box.counterfactual)}</span>
-                  </div>
-                </div>
-              )}
-              {buildStage >= 4 && (
-                <div className="panel px-3 py-2">
-                  <div className="text-[11px] text-muted-foreground">第四步：事后实际 − 反事实，就是双重差分</div>
-                  <div className="num mt-1">
-                    {fmt(t1)} − {fmt(box.counterfactual)} = <span className="text-copper">{fmt(box.att)}</span>
+                    {fmt(box.treatedChange)} − {fmt(box.controlChange)} = <span className="text-copper">{fmt(box.att)}</span>
                   </div>
                 </div>
               )}
@@ -542,7 +534,7 @@ function DidLesson() {
 
       {step === 3 && (
         <>
-          <Panel title="把缺的那一格画出来" hint="虚线就是反事实：从通车街区事前那一点出发，按对照的涨幅往前走。">
+          <Panel title="画出反事实虚线" hint="虚线表示通车街区若不通车，会按对照的涨幅走到哪里。">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="text-[11px] text-muted-foreground">事后取</span>
               {DID_YEARS.filter((y) => y >= OPEN_YEAR).map((y) => (
@@ -594,7 +586,7 @@ function DidLesson() {
             </p>
           </Panel>
 
-          <Panel title="一步步算" hint="四格先各自相减，再把两个差相减。">
+          <Panel title="一步步算" hint="两个变化相减，就是双重差分。">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label={`通车街区 ${preYear}`} value={t0} tone="copper" />
               <Tile label={`通车街区 ${postYear}`} value={t1} tone="copper" />
@@ -615,16 +607,10 @@ function DidLesson() {
                 </div>
               </div>
               <div className="panel px-3 py-2">
-                <div className="text-[11px] text-muted-foreground">第三步：补出缺的那一格（若不通车的事后水平）</div>
+                <div className="text-[11px] text-muted-foreground">第三步：两个变化相减，得到通车多出来的部分</div>
                 <div className="num mt-1">
-                  {fmt(t0)} + {fmt(box.controlChange)} = <span className="text-rose">{fmt(box.counterfactual)}</span>
-                </div>
-              </div>
-              <div className="panel px-3 py-2">
-                <div className="text-[11px] text-muted-foreground">第四步：双重差分＝事后实际 − 反事实＝两个变化之差</div>
-                <div className="num mt-1">
-                  {fmt(t1)} − {fmt(box.counterfactual)} = {fmt(box.treatedChange)} − {fmt(box.controlChange)} ={" "}
-                  <span className="text-copper">{effectRevealed ? fmt(box.att) : "先猜后显示"}</span>
+                  {fmt(box.treatedChange)} − {fmt(box.controlChange)} ={" "}
+                  <span className="text-copper">{effectRevealed ? fmt(box.att) : "先猜后显示"}</span> 万元/平方米
                 </div>
               </div>
             </div>
