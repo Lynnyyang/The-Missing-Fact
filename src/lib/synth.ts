@@ -156,3 +156,27 @@ export function makeCities(): City[] {
     return { key: c.key, name: c.name, alreadyTreated: c.alreadyTreated, note: c.note, pm };
   });
 }
+
+/* 安慰剂检验用的街区池：只有全城大势，没有任何通车效应 */
+export function makePlaceboBlocks(n = 30, seed = 90210): Block[] {
+  const rand = rng(seed);
+  const out: Block[] = [];
+  for (let i = 0; i < n; i++) {
+    const level = 2.0 + rand() * 1.6;
+    const slope = 0.12 + normal(rand, 0, 0.02);
+    const prices: Record<number, number> = {};
+    DID_YEARS.forEach((y, k) => {
+      prices[y] = Math.round((level + slope * k + normal(rand, 0, 0.035)) * 100) / 100;
+    });
+    out.push({
+      key: `pb${i}`,
+      name: `街区 ${String.fromCharCode(65 + Math.floor(i / 10))}${(i % 10) + 1}`,
+      treated: false,
+      density: Math.round(170 + rand() * 80),
+      distance: Math.round((3 + rand() * 4) * 10) / 10,
+      prePrice: Math.round(level * 100) / 100,
+      prices,
+    });
+  }
+  return out;
+}
