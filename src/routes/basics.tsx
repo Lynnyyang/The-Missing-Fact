@@ -53,7 +53,7 @@ type Person = {
   effect: number;
 };
 
-const NAMES = ["阿岚", "小舟", "青禾", "石头", "云溪", "阿柳", "南浔", "松原", "临湖", "景山"];
+const NAMES = ["阿安", "小舟", "青禾", "石头", "云溪", "阿柳", "南浔", "松原", "临湖", "景山"];
 
 function makePeople(): Person[] {
   const rand = rng(20260903);

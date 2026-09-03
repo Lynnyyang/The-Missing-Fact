@@ -23,12 +23,12 @@ import { useApp, useCompanionSnapshot } from "@/state/app";
 export const Route = createFileRoute("/synth")({
   head: () => ({
     meta: [
-      { title: "岚城煤改气 · 合成控制｜寻找缺失的事实" },
+      { title: "安城煤改气 · 合成控制｜寻找缺失的事实" },
       {
         name: "description",
-        content: "开关供体城市、手调或自动拟合权重、跑安慰剂检验，用一篮子城市拼出一个没改气的岚城。",
+        content: "开关供体城市、手调或自动拟合权重、跑安慰剂检验，用一篮子城市拼出一个没改气的安城。",
       },
-      { property: "og:title", content: "岚城煤改气 · 合成控制" },
+      { property: "og:title", content: "安城煤改气 · 合成控制" },
       { property: "og:description", content: "只有一座城被处理，单个对照不够，就用非负权重加权拼一个替身。" },
     ],
   }),
@@ -110,8 +110,8 @@ function SynthLesson() {
 
   const chart = SC_YEARS.map((y, t) => ({
     year: String(y),
-    岚城: target.pm[t] ?? 0,
-    合成岚城: Math.round((path[t] ?? 0) * 10) / 10,
+    安城: target.pm[t] ?? 0,
+    合成安城: Math.round((path[t] ?? 0) * 10) / 10,
     ...(placeboFit ? { [`安慰剂 ${placeboCity!.name}`]: Math.round((placeboFit.path[t] ?? 0) * 10) / 10 } : {}),
     ...(showAllPaths
       ? Object.fromEntries(placeboAll.map((r) => [`安慰剂·${r.city.name}`, Math.round((r.path[t] ?? 0) * 10) / 10]))
@@ -142,20 +142,20 @@ function SynthLesson() {
   if (badIncluded.length)
     hints.push(`供体里还留着 ${badIncluded.map((c) => c.name).join("、")}，它们自己就被同类政策处理过，必须拿掉。`);
   if (step === 2 && preFit > 3) hints.push(`改气前的拟合误差是 ${fmt(preFit, 2)}，还偏大，试试自动拟合或调高贴合的城市权重。`);
-  if (step === 2 && preFit <= 3) hints.push(`改气前误差 ${fmt(preFit, 2)}，合成岚城已经贴住改气前的轨迹了。`);
+  if (step === 2 && preFit <= 3) hints.push(`改气前误差 ${fmt(preFit, 2)}，合成安城已经贴住改气前的轨迹了。`);
   if (step === 3) hints.push("缺口是负数表示空气变好，别把负号读成效果变差。");
   if (step === 4 && placeboFit)
     hints.push(
-      `${placeboCity!.name} 假装改气后的缺口是 ${fmt(placeboFit.gap, 1)}，跟岚城的 ${fmt(gapNow, 1)} 比一比谁更突出。`,
+      `${placeboCity!.name} 假装改气后的缺口是 ${fmt(placeboFit.gap, 1)}，跟安城的 ${fmt(gapNow, 1)} 比一比谁更突出。`,
     );
-  if (step === 4 && !ranAll) hints.push("单个安慰剂不算数，点“跑全部安慰剂”，看岚城在整群假改气城市里排第几。");
+  if (step === 4 && !ranAll) hints.push("单个安慰剂不算数，点“跑全部安慰剂”，看安城在整群假改气城市里排第几。");
   if (step === 4 && ranAll && approxP !== null)
     hints.push(
-      `岚城的缺口比 ${placeboAll.length - moreExtreme}/${placeboAll.length} 个安慰剂更极端；按拟合误差校正后近似 p 值是 ${fmt(approxP, 2)}，${approxP <= 0.2 ? "勉强说得过去" : "挡不住巧合的解释"}。`,
+      `安城的缺口比 ${placeboAll.length - moreExtreme}/${placeboAll.length} 个安慰剂更极端；按拟合误差校正后近似 p 值是 ${fmt(approxP, 2)}，${approxP <= 0.2 ? "勉强说得过去" : "挡不住巧合的解释"}。`,
     );
 
   useCompanionSnapshot({
-    lesson: "岚城煤改气（合成控制）",
+    lesson: "安城煤改气（合成控制）",
     page: STEPS[step]?.title ?? "",
     facts: {
       政策年份: SC_TREAT_YEAR,
@@ -167,7 +167,7 @@ function SynthLesson() {
       安慰剂城市: placeboCity?.name ?? "还没跑",
       安慰剂缺口: placeboFit ? fmt(placeboFit.gap, 1) : "—",
       全部安慰剂: ranAll ? `已跑 ${placeboAll.length} 个` : "还没跑",
-      "岚城极端程度排名（共几座城市）": ranAll ? `第 ${moreExtreme + 1} 名，共 ${totalUnits} 座` : "—",
+      "安城极端程度排名（共几座城市）": ranAll ? `第 ${moreExtreme + 1} 名，共 ${totalUnits} 座` : "—",
       "校正后近似 p 值": approxP !== null ? fmt(approxP, 2) : "—",
     },
     hints: hints.length ? hints : ["先把已被同类政策处理过的城市从篮子里拿掉。"],
@@ -175,18 +175,18 @@ function SynthLesson() {
 
   return (
     <LessonShell
-      lesson="岚城煤改气"
-      subtitle="合成控制：拿一篮子城市的加权平均，拼一个没改气的岚城"
+      lesson="安城煤改气"
+      subtitle="合成控制：拿一篮子城市的加权平均，拼一个没改气的安城"
       steps={STEPS}
       step={step}
       onStep={setStep}
     >
       {step === 0 && (
-        <Panel title="情况" hint="2014 年只有岚城强制煤改气。结果是年均 PM2.5（μg/m³）。">
+        <Panel title="情况" hint="2014 年只有安城强制煤改气。结果是年均 PM2.5（μg/m³）。">
           <p className="text-sm leading-relaxed">
-            只有一座城被处理，任何单个城市都可能碰巧不像岚城。办法是：
+            只有一座城被处理，任何单个城市都可能碰巧不像安城。办法是：
             <span className="text-copper">给一篮子未处理城市配非负权重、加总为 1</span>
-            ，让改气前的轨迹贴住岚城，再把这条合成路径当成岚城若不改气的路。
+            ，让改气前的轨迹贴住安城，再把这条合成路径当成安城若不改气的路。
           </p>
           <div className="mt-3">
             <Callout>只能在篮子里插值，不能出现负权重，也不能硬外推到篮子之外。</Callout>
@@ -240,7 +240,7 @@ function SynthLesson() {
       )}
 
       {(step === 2 || step === 3 || step === 4) && (
-        <Panel title="岚城与合成岚城" hint="竖线是 2014 年改气。两线之间的缺口就是估计。">
+        <Panel title="安城与合成安城" hint="竖线是 2014 年改气。两线之间的缺口就是估计。">
           <div className="h-72">
             <ResponsiveContainer>
               <LineChart data={chart}>
@@ -253,8 +253,8 @@ function SynthLesson() {
                   stroke="var(--copper)"
                   label={{ value: "改气", fontSize: 10, fill: "var(--muted-foreground)" }}
                 />
-                <Line type="monotone" dataKey="岚城" stroke="var(--copper)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="合成岚城" stroke="var(--teal)" strokeWidth={2} strokeDasharray="5 4" dot={false} />
+                <Line type="monotone" dataKey="安城" stroke="var(--copper)" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="合成安城" stroke="var(--teal)" strokeWidth={2} strokeDasharray="5 4" dot={false} />
                 {placeboFit && (
                   <Line
                     type="monotone"
@@ -325,7 +325,7 @@ function SynthLesson() {
 
       {step === 3 && (
         <GuessBox
-          question="先猜：改气让岚城最后一年的 PM2.5 变了多少？（变好是负数）"
+          question="先猜：改气让安城最后一年的 PM2.5 变了多少？（变好是负数）"
           unit="μg/m³"
           truth={gapNow}
           tolerance={4}
@@ -344,7 +344,7 @@ function SynthLesson() {
         <>
           <Panel title="第一步：先拿一座城市试跑" hint="挑一座没改气的城市，假装它在 2014 年也改了气，用剩下的城市给它拼合成替身。">
             <p className="text-xs leading-relaxed text-muted-foreground">
-              这座城市其实没改气，如果它也冒出大缺口，说明“缺口”这种事光靠巧合就能发生，岚城的缺口就没那么稀奇了。
+              这座城市其实没改气，如果它也冒出大缺口，说明“缺口”这种事光靠巧合就能发生，安城的缺口就没那么稀奇了。
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {eligible.map((c) => (
@@ -361,7 +361,7 @@ function SynthLesson() {
               ))}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <Tile label="岚城缺口" value={gapNow} unit="μg/m³" tone="copper" />
+              <Tile label="安城缺口" value={gapNow} unit="μg/m³" tone="copper" />
               <Tile
                 label={placeboCity ? `${placeboCity.name} 假装改气的缺口` : "还没选安慰剂"}
                 value={placeboFit ? placeboFit.gap : "—"}
@@ -372,7 +372,7 @@ function SynthLesson() {
             {placeboFit && Math.abs(placeboFit.gap) > Math.abs(gapNow) && (
               <div className="mt-3">
                 <Callout tone="rose">
-                  {placeboCity!.name} 没改气也掉出这么大的缺口——光看这一座城，岚城的结果就可能只是巧合。
+                  {placeboCity!.name} 没改气也掉出这么大的缺口——光看这一座城，安城的结果就可能只是巧合。
                 </Callout>
               </div>
             )}
@@ -380,7 +380,7 @@ function SynthLesson() {
 
           <Panel
             title="第二步：让所有安慰剂一起跑"
-            hint="一座城碰巧不算数，要看整群。把每座合格供体城市轮流当成“假岚城”，各跑一次。"
+            hint="一座城碰巧不算数，要看整群。把每座合格供体城市轮流当成“假安城”，各跑一次。"
             right={
               <button
                 type="button"
@@ -396,7 +396,7 @@ function SynthLesson() {
           >
             {!ranAll && (
               <p className="text-xs text-muted-foreground">
-                点右上按钮，对 {eligible.length} 座没被处理过的供体城市各做一次完整合成，比较它们的缺口和岚城的 {fmt(gapNow, 1)}。
+                点右上按钮，对 {eligible.length} 座没被处理过的供体城市各做一次完整合成，比较它们的缺口和安城的 {fmt(gapNow, 1)}。
               </p>
             )}
             {ranAll && (
@@ -406,7 +406,7 @@ function SynthLesson() {
                     <BarChart
                       data={placeboAll
                         .map((r) => ({ name: r.city.name, 缺口: Math.round(r.gap * 10) / 10 }))
-                        .concat([{ name: "岚城", 缺口: Math.round(gapNow * 10) / 10 }])
+                        .concat([{ name: "安城", 缺口: Math.round(gapNow * 10) / 10 }])
                         .sort((a, b) => a.缺口 - b.缺口)}
                     >
                       <CartesianGrid stroke="var(--border)" vertical={false} />
@@ -417,10 +417,10 @@ function SynthLesson() {
                       <Bar dataKey="缺口" radius={[4, 4, 0, 0]}>
                         {placeboAll
                           .map((r) => ({ name: r.city.name, 缺口: r.gap }))
-                          .concat([{ name: "岚城", 缺口: gapNow }])
+                          .concat([{ name: "安城", 缺口: gapNow }])
                           .sort((a, b) => a.缺口 - b.缺口)
                           .map((e) => (
-                            <Cell key={e.name} fill={e.name === "岚城" ? "var(--copper)" : "var(--muted-foreground)"} fillOpacity={e.name === "岚城" ? 1 : 0.45} />
+                            <Cell key={e.name} fill={e.name === "安城" ? "var(--copper)" : "var(--muted-foreground)"} fillOpacity={e.name === "安城" ? 1 : 0.45} />
                           ))}
                       </Bar>
                     </BarChart>
@@ -430,9 +430,9 @@ function SynthLesson() {
                   注意：这里的柱子按 <span className="text-copper">缺口本身</span> 排队；第三步的表按 <span className="text-copper">|缺口| ÷ 改气前拟合误差</span> 排队。两处用的是同一批城市、同一组数字，但排序口径不同，所以顺序和排名不一样。
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  <Tile label="岚城缺口" value={gapNow} unit="μg/m³" tone="copper" />
-                  <Tile label="比岚城更极端的安慰剂" value={`${moreExtreme} / ${placeboAll.length}`} tone={moreExtreme === 0 ? "teal" : "rose"} />
-                  <Tile label="岚城极端程度排名" value={`第 ${moreExtreme + 1} / ${totalUnits}`} tone={moreExtreme === 0 ? "teal" : "copper"} />
+                  <Tile label="安城缺口" value={gapNow} unit="μg/m³" tone="copper" />
+                  <Tile label="比安城更极端的安慰剂" value={`${moreExtreme} / ${placeboAll.length}`} tone={moreExtreme === 0 ? "teal" : "rose"} />
+                  <Tile label="安城极端程度排名" value={`第 ${moreExtreme + 1} / ${totalUnits}`} tone={moreExtreme === 0 ? "teal" : "copper"} />
                 </div>
                 <label className="mt-3 flex items-center gap-2 text-xs">
                   <input
@@ -452,7 +452,7 @@ function SynthLesson() {
           {ranAll && (
             <Panel title="第三步：校正拟合质量，再下结论" hint="有的安慰剂城市根本拟合不好，大缺口可能是“拼不出来”而不是“真有效果”。">
               <p className="text-xs leading-relaxed text-muted-foreground">
-                做法：把每座城市的 <span className="text-copper">|缺口| ÷ 改气前拟合误差</span> 算出来，用这个比值排队，看岚城排在哪。
+                做法：把每座城市的 <span className="text-copper">|缺口| ÷ 改气前拟合误差</span> 算出来，用这个比值排队，看安城排在哪。
               </p>
               <div className="mt-2 space-y-2 rounded-lg border border-border bg-card/40 p-3 text-xs leading-relaxed text-muted-foreground">
                 <p>
@@ -462,12 +462,12 @@ function SynthLesson() {
                 </p>
                 <p>
                   举个例子：甲城缺口 −12、改气前误差 10，比值 1.2——它的缺口还没有平时的拼合误差大，不足为奇；
-                  岚城缺口 −20、改气前误差 2，比值 10——缺口是平时拼合误差的 10 倍，很难用“碰巧拼歪了”来解释。
+                  安城缺口 −20、改气前误差 2，比值 10——缺口是平时拼合误差的 10 倍，很难用“碰巧拼歪了”来解释。
                   直接比缺口会把这两类城市混为一谈，除以各自的误差后，才是在同一杆秤上比较。
                 </p>
                 <p>
                   这也是安慰剂检验里常用的校正思路：用每座城市自己的拟合误差当“尺子”，
-                  再问岚城按这把尺子量出来的缺口，在整群没改气的城市里还能排第几——排得越靠前，近似 p 值越小，“只是巧合”的解释就越站不住。
+                  再问安城按这把尺子量出来的缺口，在整群没改气的城市里还能排第几——排得越靠前，近似 p 值越小，“只是巧合”的解释就越站不住。
                 </p>
               </div>
               <div className="mt-3 overflow-hidden rounded-lg border border-border">
@@ -481,7 +481,7 @@ function SynthLesson() {
                     </tr>
                   </thead>
                   <tbody>
-                    {[{ name: "岚城", gap: gapNow, preRmse: preFit, ratio: lanRatio, isLan: true }]
+                    {[{ name: "安城", gap: gapNow, preRmse: preFit, ratio: lanRatio, isLan: true }]
                       .concat(placeboAll.map((r) => ({ name: r.city.name, gap: r.gap, preRmse: r.preRmse, ratio: r.ratio, isLan: false })))
                       .sort((a, b) => b.ratio - a.ratio)
                       .map((r) => (
@@ -496,7 +496,7 @@ function SynthLesson() {
                 </table>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <Tile label="岚城的校正比值排名" value={`第 ${ratioMoreExtreme + 1} / ${totalUnits}`} tone={ratioMoreExtreme === 0 ? "teal" : "rose"} />
+                <Tile label="安城的校正比值排名" value={`第 ${ratioMoreExtreme + 1} / ${totalUnits}`} tone={ratioMoreExtreme === 0 ? "teal" : "rose"} />
                 <Tile
                   label="近似 p 值"
                   value={approxP !== null ? fmt(approxP, 2) : "—"}
@@ -506,13 +506,13 @@ function SynthLesson() {
               <div className="mt-3">
                 {approxP !== null && approxP <= 0.2 ? (
                   <Callout>
-                    结论：{totalUnits} 座城市里只有约 {fmt(approxP * 100, 0)}% 能碰巧掉出像岚城这么规整的缺口。
+                    结论：{totalUnits} 座城市里只有约 {fmt(approxP * 100, 0)}% 能碰巧掉出像安城这么规整的缺口。
                     空气变好大概率不是巧合，煤改气的估计站得住——但前提仍是改气前拟合贴、供体池干净。
                   </Callout>
                 ) : (
                   <Callout tone="rose">
                     结论：近似 p 值 {approxP !== null ? fmt(approxP, 2) : "—"}，没改气的城市里也有不少能掉出类似缺口。
-                    岚城的下降还挡不住“只是巧合”的解释，先回去检查供体池和改气前拟合，再谈效果。
+                    安城的下降还挡不住“只是巧合”的解释，先回去检查供体池和改气前拟合，再谈效果。
                   </Callout>
                 )}
               </div>
@@ -527,15 +527,15 @@ function SynthLesson() {
           <Quiz
             question="合成控制的缺口能怎么读？"
             options={[
-              "岚城相对这一篮子城市加权路径的差，负数表示空气变好",
+              "安城相对这一篮子城市加权路径的差，负数表示空气变好",
               "任何城市煤改气都会得到的效果",
-              "岚城和全国平均的差",
+              "安城和全国平均的差",
             ]}
             answer={0}
             onAnswer={(ok) => track("小结", "选择题", ok ? "答对" : "答错")}
           />
           <Callout>
-            权重非负、加总为 1，所以合成岚城只能落在篮子里的城市之间。篮子外的情形不能硬外推。数据为教学合成。
+            权重非负、加总为 1，所以合成安城只能落在篮子里的城市之间。篮子外的情形不能硬外推。数据为教学合成。
           </Callout>
         </>
       )}

@@ -15,7 +15,7 @@ export type Student = {
 };
 
 const XING = ["林", "陈", "赵", "沈", "许", "周", "叶", "郑", "邓", "何", "苏", "冯"];
-const MING = ["晓月", "允", "书白", "南", "青禾", "岸", "望舒", "岐", "宁", "砚", "拾", "岚"];
+const MING = ["晓月", "允", "书白", "南", "青禾", "岸", "望舒", "岐", "宁", "砚", "拾", "安宁"];
 
 export function makeStudents(seed = 20240901, n = 160): Student[] {
   const rand = rng(seed);
@@ -119,7 +119,7 @@ export function makeBlocks(): Block[] {
   });
 }
 
-/* ---------------- 第四课：岚城煤改气（合成控制） ---------------- */
+/* ---------------- 第四课：安城煤改气（合成控制） ---------------- */
 
 export type City = {
   key: string;
@@ -135,7 +135,7 @@ export const SC_TREAT_YEAR = 2014;
 export function makeCities(): City[] {
   const rand = rng(140214);
   const spec = [
-    { key: "lan", name: "岚城", level: 86, drift: -1.4, wave: 6 },
+    { key: "lan", name: "安城", level: 86, drift: -1.4, wave: 6 },
     { key: "hy", name: "怀垣", level: 79, drift: -1.1, wave: 5 },
     { key: "ps", name: "浦沙", level: 94, drift: -1.7, wave: 7 },
     { key: "yq", name: "允泉", level: 71, drift: -0.9, wave: 4 },
