@@ -141,9 +141,17 @@ export function makeCities(): City[] {
     { key: "yq", name: "允泉", level: 71, drift: -0.9, wave: 4 },
     { key: "tl", name: "潼乐", level: 102, drift: -2.0, wave: 8 },
     { key: "jz", name: "晋洲", level: 68, drift: -0.6, wave: 3 },
+    { key: "ck", name: "沧口", level: 110, drift: -2.4, wave: 9 },
+    { key: "nc", name: "宁川", level: 83, drift: -1.3, wave: 5 },
+    { key: "yx", name: "云溪", level: 77, drift: -1.05, wave: 6 },
+    { key: "dp", name: "东浦", level: 91, drift: -1.55, wave: 7 },
+    { key: "nx", name: "南浔", level: 74, drift: -0.95, wave: 4 },
+    { key: "js", name: "景山", level: 97, drift: -1.85, wave: 8 },
+    { key: "lj", name: "柳江", level: 81, drift: -1.25, wave: 5 },
+    { key: "lh", name: "临湖", level: 70, drift: -0.75, wave: 3 },
+    { key: "sy", name: "松原", level: 106, drift: -2.2, wave: 9 },
     { key: "bh", name: "北鹤", level: 88, drift: -1.5, wave: 6, alreadyTreated: true, note: "2013 年已做过同类煤改气" },
     { key: "wd", name: "梧甸", level: 75, drift: -1.0, wave: 5, alreadyTreated: true, note: "2015 年起限煤，属被处理城市" },
-    { key: "ck", name: "沧口", level: 110, drift: -2.4, wave: 9 },
   ];
   return spec.map((c) => {
     const pm = SC_YEARS.map((y, i) => {
