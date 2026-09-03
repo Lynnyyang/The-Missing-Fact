@@ -230,7 +230,7 @@ function DidLesson() {
       安慰剂缺口: fmt(fakeBox.att),
       当前比法: compareMode === "post" ? "只比事后两组" : compareMode === "prepost" ? "只比通车街区前后" : "双重差分",
       当前比法给出的数: fmt(compareValue),
-      "一格一格搭进度（0-4）": buildStage,
+      "一格一格搭进度（0-3）": buildStage,
       对照里是否含陷阱街区: hasTrap ? "含（金贸或机场边）" : "不含",
     },
     hints: hints.length ? hints : ["点街区加减对照，四格和反事实虚线会立刻重算。"],
