@@ -53,7 +53,7 @@ function SynthLesson() {
   const target = cities.find((c) => c.key === "lan")!;
   const donorsAll = cities.filter((c) => c.key !== "lan");
 
-  const [on, setOn] = useState<string[]>(donorsAll.filter((d) => !d.alreadyTreated).map((d) => d.key));
+  const [on, setOn] = useState<string[]>([]);
   const [weights, setWeights] = useState<Record<string, number>>({});
   const [placebo, setPlacebo] = useState<string | null>(null);
   const [ranAll, setRanAll] = useState(false);
