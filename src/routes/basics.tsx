@@ -33,7 +33,7 @@ export const Route = createFileRoute("/basics")({
       },
     ],
   }),
-  component: BasicsLesson;
+  component: BasicsLesson,
 });
 
 const STEPS: Step[] = [
@@ -156,7 +156,7 @@ function BasicsLesson() {
     facts["全体平均效应 ATE"] = fmt(ate);
   }
   if (step === 3) {
-    facts["�quan次数（第几次掷硬币）"] = coinSeed;
+    facts["第几次掷硬币"] = coinSeed;
     facts["参加组观测均值"] = fmt(coin.obsT);
     facts["没参加组观测均值"] = fmt(coin.obsC);
     facts["观测到的均值差"] = fmt(coin.obs);
