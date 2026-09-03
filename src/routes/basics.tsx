@@ -86,7 +86,7 @@ function BasicsLesson() {
   const ate = mean(people.map((p) => p.effect));
 
   useEffect(() => {
-    visit(STEPS[step].id, 6);
+    visit(STEPS[step]!.id, 6);
   }, [step, visit]);
 
   // 分配：bias = 0 完全掷硬币；bias = 1 完全按「谁受益大谁就报名」
@@ -134,16 +134,16 @@ function BasicsLesson() {
     }));
     batch.forEach((d) => {
       const k = Math.min(bins - 1, Math.max(0, Math.floor((d - lo) / w)));
-      out[k].v += 1;
+      out[k]!.v += 1;
     });
     return out;
   }, [batch, ate]);
 
-  const p = people[who];
+  const p = people[who]!;
   const flipCount = flipped.length;
 
   const facts: Record<string, string | number> = {
-    当前步骤: STEPS[step].title,
+    当前步骤: STEPS[step]!.title,
     人数: people.length,
     已翻开的人: flipCount,
     "上帝视角（现实里看不到）": godMode ? "打开" : "关闭",
@@ -174,7 +174,7 @@ function BasicsLesson() {
 
   useCompanionSnapshot({
     lesson: "预备课：潜在结果与因果效应",
-    page: STEPS[step].title,
+    page: STEPS[step]!.title,
     facts,
     hints:
       step === 0
@@ -295,7 +295,7 @@ function BasicsLesson() {
               max={people.length - 1}
               onChange={(v) => {
                 setWho(v);
-                track("个体效应", "看谁", people[v].name);
+                track("个体效应", "看谁", people[v]!.name);
               }}
               hint={`当前：${p.name}`}
             />
