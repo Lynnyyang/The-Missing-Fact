@@ -107,7 +107,7 @@ function DidLesson() {
   const { visit, track } = useApp();
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<string[]>(["hx", "nw"]);
-  const [fakeYear, setFakeYear] = useState(OPEN_YEAR);
+  const [fakeYear, setFakeYear] = useState(2016);
   const [postYear, setPostYear] = useState(2020);
   const [preYear, setPreYear] = useState(2017);
   const [trendStart, setTrendStart] = useState(2014);
