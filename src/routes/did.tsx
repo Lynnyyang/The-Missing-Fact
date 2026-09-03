@@ -119,6 +119,8 @@ function DidLesson() {
   const [buildStage, setBuildStage] = useState(0);
   const [cfDrag, setCfDrag] = useState(0); // 用户拖出来的反事实端点
   const [cfDrawn, setCfDrawn] = useState(false);
+  const [mcReps, setMcReps] = useState(200);
+  const [groupSeed, setGroupSeed] = useState(1);
 
   const blocks = useMemo(() => makeBlocks(), []);
   const treated = blocks.filter((b) => b.treated);
