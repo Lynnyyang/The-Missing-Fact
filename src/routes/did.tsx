@@ -40,8 +40,9 @@ const STEPS: Step[] = [
   { id: "did-1", title: "了解情况" },
   { id: "did-2", title: "搭出双重差分" },
   { id: "did-3", title: "平行趋势" },
-  { id: "did-4", title: "逐年检查" },
-  { id: "did-5", title: "小结" },
+  { id: "did-4", title: "画出反事实" },
+  { id: "did-5", title: "逐年检查" },
+  { id: "did-6", title: "小结" },
 ];
 
 function ControlPicker({
