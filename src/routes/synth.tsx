@@ -58,6 +58,8 @@ function SynthLesson() {
   const [placebo, setPlacebo] = useState<string | null>(null);
   const [ranAll, setRanAll] = useState(false);
   const [showAllPaths, setShowAllPaths] = useState(false);
+  const [gapRevealed, setGapRevealed] = useState(false);
+
 
   const donors = donorsAll.filter((d) => on.includes(d.key));
   const badIncluded = donors.filter((d) => d.alreadyTreated);
@@ -122,6 +124,12 @@ function SynthLesson() {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
   }, [step, visit]);
 
+  // 改动权重、供体或换步骤，都重新藏起缺口，让学生先猜
+  useEffect(() => {
+    setGapRevealed(false);
+  }, [step, on, weights]);
+
+
   function autoFit() {
     const fit = fitSynth(
       target.pm.slice(0, PRE_LEN),
@@ -143,7 +151,9 @@ function SynthLesson() {
     hints.push(`供体里还留着 ${badIncluded.map((c) => c.name).join("、")}，它们自己就被同类政策处理过，必须拿掉。`);
   if (step === 2 && preFit > 3) hints.push(`改气前的拟合误差是 ${fmt(preFit, 2)}，还偏大，试试自动拟合或调高贴合的城市权重。`);
   if (step === 2 && preFit <= 3) hints.push(`改气前误差 ${fmt(preFit, 2)}，合成安城已经贴住改气前的轨迹了。`);
-  if (step === 3) hints.push("缺口是负数表示空气变好，别把负号读成效果变差。");
+  if (step === 3 && !gapRevealed) hints.push("最后一年缺口先藏起来了：写下你的猜测，点“对照答案”才会显示。");
+  if (step === 3 && gapRevealed) hints.push("缺口是负数表示空气变好，别把负号读成效果变差。");
+
   if (step === 4 && placeboFit)
     hints.push(
       `${placeboCity!.name} 假装改气后的缺口是 ${fmt(placeboFit.gap, 1)}，跟安城的 ${fmt(gapNow, 1)} 比一比谁更突出。`,
@@ -163,7 +173,7 @@ function SynthLesson() {
       被处理过却仍在篮子里的城市: badIncluded.map((c) => c.name).join("、") || "无",
       权重: norm.map((n) => `${n.city.name} ${fmt(n.w, 2)}`).join("，"),
       "改气前拟合误差（越小越贴）": fmt(preFit, 2),
-      "最后一年缺口（μg/m³）": fmt(gapNow, 1),
+      "最后一年缺口（μg/m³）": step === 3 && !gapRevealed ? "未揭示（等待用户先猜）" : fmt(gapNow, 1),
       安慰剂城市: placeboCity?.name ?? "还没跑",
       安慰剂缺口: placeboFit ? fmt(placeboFit.gap, 1) : "—",
       全部安慰剂: ranAll ? `已跑 ${placeboAll.length} 个` : "还没跑",
@@ -281,7 +291,12 @@ function SynthLesson() {
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
             <Tile label="改气前拟合误差" value={preFit} tone={preFit > 3 ? "rose" : "teal"} />
-            <Tile label="最后一年缺口" value={gapNow} unit="μg/m³" tone="copper" />
+            {step === 3 && !gapRevealed ? (
+              <Tile label="最后一年缺口" value="先猜后显示" tone="copper" sub="在下面写下猜测并点“对照答案”" />
+            ) : (
+              <Tile label="最后一年缺口" value={gapNow} unit="μg/m³" tone="copper" />
+            )}
+
             <Tile label="供体个数" value={donors.length} />
           </div>
         </Panel>
@@ -329,7 +344,9 @@ function SynthLesson() {
           unit="μg/m³"
           truth={gapNow}
           tolerance={4}
+          onReveal={() => setGapRevealed(true)}
           onResolve={(g, ok) => track("对照轨迹", "先猜再对照", `猜 ${fmt(g, 1)}，${ok ? "在容差内" : "偏了"}`)}
+
         />
       )}
 
