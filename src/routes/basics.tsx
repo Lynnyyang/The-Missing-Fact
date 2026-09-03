@@ -193,7 +193,7 @@ function BasicsLesson() {
   }
   if (step === 2) {
     facts["分组方式"] =
-      naiveMode === "random" ? "随机分组" : naiveMode === "highY0" ? "成绩好的优先参加" : "觉得自己进步大的优先";
+      naiveMode === "random" ? "随机分组" : naiveMode === "highY0" ? "成绩好的优先参加" : "成绩差的优先参加";
     facts["上帝视角"] = naiveGodMode ? "打开" : "关闭";
     facts["参加营者观测均值"] = fmt(naiveStat.obsT);
     facts["没参加营者观测均值"] = fmt(naiveStat.obsC);
