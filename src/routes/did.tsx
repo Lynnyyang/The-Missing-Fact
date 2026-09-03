@@ -242,6 +242,8 @@ function DidLesson() {
   const pFake = pValue(nullsFake, fakeBox.att);
   const pReal = pValue(nullsReal, realBox.att);
   const fakeHist = histOf(nullsFake, [fakeBox.att]);
+  const nearestX = (hist: Array<{ x: string }>, v: number) =>
+    hist.reduce((best, d) => (Math.abs(Number(d.x) - v) < Math.abs(Number(best.x) - v) ? d : best), hist[0]!).x;
 
   const randDraw = useMemo(() => drawAtt(rng(2200 + groupSeed * 37), OPEN_YEAR - 1, OPEN_YEAR + 1), [groupSeed, pool]);
   const pRandom = pValue(nullsReal, randDraw.att);
@@ -825,7 +827,7 @@ function DidLesson() {
                   <XAxis dataKey="x" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
                   <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                   <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
-                  <ReferenceLine x={fmt(fakeBox.att, 2)} stroke="var(--rose)" strokeDasharray="4 3" label={{ value: "假政策年的估计", fontSize: 10, fill: "var(--rose)", position: "top" }} />
+                  <ReferenceLine x={nearestX(fakeHist, fakeBox.att)} stroke="var(--rose)" strokeDasharray="4 3" label={{ value: "假政策年的估计", fontSize: 10, fill: "var(--rose)", position: "top" }} />
                   <Bar dataKey="次数" fill="var(--teal)" radius={2} />
                 </BarChart>
               </ResponsiveContainer>
@@ -863,7 +865,7 @@ function DidLesson() {
                   <XAxis dataKey="x" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
                   <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                   <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
-                  <ReferenceLine x={fmt(randDraw.att, 2)} stroke="var(--copper)" strokeDasharray="4 3" label={{ value: "这次随机分组", fontSize: 10, fill: "var(--copper)", position: "top" }} />
+                  <ReferenceLine x={nearestX(randHist, randDraw.att)} stroke="var(--copper)" strokeDasharray="4 3" label={{ value: "这次随机分组", fontSize: 10, fill: "var(--copper)", position: "top" }} />
                   <Bar dataKey="次数" fill="var(--teal)" radius={2} />
                 </BarChart>
               </ResponsiveContainer>
