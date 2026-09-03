@@ -653,7 +653,7 @@ function DidLesson() {
                 </span>
                 <input
                   type="range"
-                  min={Math.round((t0 - 0.5) * 20) / 20}
+                  min={Math.round((tOpen - 0.5) * 20) / 20}
                   max={Math.round((t1 + 0.2) * 20) / 20}
                   step={0.05}
                   value={cfValue}
@@ -668,17 +668,17 @@ function DidLesson() {
                 <span className="num text-sm text-copper">{cfDrawn ? fmt(cfValue) : "拖一下试试"}</span>
                 <Chip
                   onClick={() => {
-                    setCfDrag(Math.round(box.counterfactual * 100) / 100);
+                    setCfDrag(Math.round(cfAnchorEnd * 100) / 100);
                     setCfDrawn(true);
                     setShowCf(true);
-                    track("画出反事实", "按对照涨幅画出", fmt(box.counterfactual));
+                    track("画出反事实", "按对照涨幅画出", fmt(cfAnchorEnd));
                   }}
                 >
                   按对照的涨幅画出来
                 </Chip>
               </div>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                这条虚线的含义：从 {preYear} 年的 {fmt(t0)} 出发，按你自己的判断走到 {postYear} 年。
+                这条虚线的含义：从 {OPEN_YEAR} 年的 {fmt(tOpen)} 出发，按你自己的判断走到 {postYear} 年。
               </p>
             </div>
             <div className="h-72">
