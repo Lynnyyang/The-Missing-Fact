@@ -53,7 +53,7 @@ function SynthLesson() {
   const target = cities.find((c) => c.key === "lan")!;
   const donorsAll = cities.filter((c) => c.key !== "lan");
 
-  const [on, setOn] = useState<string[]>(donorsAll.filter((d) => !d.alreadyTreated).map((d) => d.key));
+  const [on, setOn] = useState<string[]>([]);
   const [weights, setWeights] = useState<Record<string, number>>({});
   const [placebo, setPlacebo] = useState<string | null>(null);
   const [ranAll, setRanAll] = useState(false);
@@ -137,6 +137,8 @@ function SynthLesson() {
   }
 
   const hints: string[] = [];
+  if (!donors.length)
+    hints.push("篮子里一座城市都没有。回到「挑选城市」，亲自挑几座没被同类政策处理过的城市进来。");
   if (badIncluded.length)
     hints.push(`供体里还留着 ${badIncluded.map((c) => c.name).join("、")}，它们自己就被同类政策处理过，必须拿掉。`);
   if (step === 2 && preFit > 3) hints.push(`改气前的拟合误差是 ${fmt(preFit, 2)}，还偏大，试试自动拟合或调高贴合的城市权重。`);
@@ -193,7 +195,12 @@ function SynthLesson() {
       )}
 
       {step === 1 && (
-        <Panel title="开关供体城市" hint="被同类政策处理过的城市不能进篮子。">
+        <Panel title="开关供体城市" hint="一开始篮子是空的，由你来挑。被同类政策处理过的城市不能进篮子。">
+          {!donors.length && (
+            <div className="mb-3">
+              <Callout>还没选任何城市。点下面的城市卡片把它放进篮子，至少挑两三座没被处理过的。</Callout>
+            </div>
+          )}
           <div className="grid gap-2 sm:grid-cols-2">
             {donorsAll.map((c) => {
               const active = on.includes(c.key);
@@ -326,7 +333,14 @@ function SynthLesson() {
         />
       )}
 
-      {step === 4 && (
+      {step === 4 && !eligible.length && (
+        <Panel title="安慰剂检验" hint="需要先有合格的供体城市。">
+          <Callout tone="rose">
+            篮子里还没有没被处理过的供体城市，没法跑安慰剂。回到「挑选城市」挑几座进来，并到「分配权重」点一次自动拟合。
+          </Callout>
+        </Panel>
+      )}
+      {step === 4 && eligible.length > 0 && (
         <>
           <Panel title="第一步：先拿一座城市试跑" hint="挑一座没改气的城市，假装它在 2014 年也改了气，用剩下的城市给它拼合成替身。">
             <p className="text-xs leading-relaxed text-muted-foreground">
