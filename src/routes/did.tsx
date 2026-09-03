@@ -184,12 +184,67 @@ function DidLesson() {
     return { year: String(y), 缺口: Math.round(b.att * 100) / 100 };
   });
 
+  /* ---------- 安慰剂实验 ---------- */
+  const pool = useMemo(() => makePlaceboBlocks(), []);
+  const fakePre = fakeYear - 1;
+  const fakePost = fakeYear + 1;
   const fakeBox = did(
-    avg(treated, fakeYear - 1),
-    avg(treated, fakeYear),
-    chosen.length ? avg(chosen, fakeYear - 1) : 0,
-    chosen.length ? avg(chosen, fakeYear) : 0,
+    avg(treated, fakePre),
+    avg(treated, fakePost),
+    chosen.length ? avg(chosen, fakePre) : 0,
+    chosen.length ? avg(chosen, fakePost) : 0,
   );
+  const realBox = did(avg(treated, OPEN_YEAR - 1), avg(treated, OPEN_YEAR + 1), chosen.length ? avg(chosen, OPEN_YEAR - 1) : 0, chosen.length ? avg(chosen, OPEN_YEAR + 1) : 0);
+
+  const drawAtt = (rand: () => number, y0: number, y1: number) => {
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      const a = shuffled[i]!;
+      shuffled[i] = shuffled[j]!;
+      shuffled[j] = a;
+    }
+    const g1 = shuffled.slice(0, 4);
+    const g2 = shuffled.slice(4, 10);
+    const names = g1.map((b) => b.name).join("、");
+    const b = did(avg(g1, y0), avg(g1, y1), avg(g2, y0), avg(g2, y1));
+    return { att: b.att, names };
+  };
+
+  const monteCarlo = (y0: number, y1: number, reps: number, seed: number) => {
+    const rand = rng(seed);
+    const atts: number[] = [];
+    for (let i = 0; i < reps; i++) atts.push(drawAtt(rand, y0, y1).att);
+    return atts;
+  };
+
+  const pValue = (nulls: number[], obs: number) =>
+    (nulls.filter((v) => Math.abs(v) >= Math.abs(obs) - 1e-9).length + 1) / (nulls.length + 1);
+
+  const histOf = (nulls: number[], marks: number[]) => {
+    const all = [...nulls, ...marks];
+    const lo = Math.min(...all);
+    const hi = Math.max(...all);
+    const span = hi - lo || 1;
+    const bins = 15;
+    const counts = new Array(bins).fill(0) as number[];
+    nulls.forEach((v) => {
+      const k = Math.min(bins - 1, Math.floor(((v - lo) / span) * bins));
+      counts[k] = (counts[k] ?? 0) + 1;
+    });
+    return counts.map((c, i) => ({ x: fmt(lo + (span * (i + 0.5)) / bins, 2), 次数: c }));
+  };
+
+  const nullsFake = useMemo(() => monteCarlo(fakePre, fakePost, mcReps, 4001 + fakeYear), [fakeYear, mcReps, pool]);
+  const nullsReal = useMemo(() => monteCarlo(OPEN_YEAR - 1, OPEN_YEAR + 1, mcReps, 7717), [mcReps, pool]);
+  const pFake = pValue(nullsFake, fakeBox.att);
+  const pReal = pValue(nullsReal, realBox.att);
+  const fakeHist = histOf(nullsFake, [fakeBox.att]);
+
+  const randDraw = useMemo(() => drawAtt(rng(2200 + groupSeed * 37), OPEN_YEAR - 1, OPEN_YEAR + 1), [groupSeed, pool]);
+  const pRandom = pValue(nullsReal, randDraw.att);
+  const sigShare = nullsReal.filter((v) => pValue(nullsReal, v) < 0.05).length / (nullsReal.length || 1);
+  const randHist = histOf(nullsReal, [randDraw.att]);
 
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
