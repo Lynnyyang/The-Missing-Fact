@@ -195,7 +195,12 @@ function SynthLesson() {
       )}
 
       {step === 1 && (
-        <Panel title="开关供体城市" hint="被同类政策处理过的城市不能进篮子。">
+        <Panel title="开关供体城市" hint="一开始篮子是空的，由你来挑。被同类政策处理过的城市不能进篮子。">
+          {!donors.length && (
+            <div className="mb-3">
+              <Callout>还没选任何城市。点下面的城市卡片把它放进篮子，至少挑两三座没被处理过的。</Callout>
+            </div>
+          )}
           <div className="grid gap-2 sm:grid-cols-2">
             {donorsAll.map((c) => {
               const active = on.includes(c.key);
