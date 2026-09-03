@@ -715,9 +715,9 @@ function DidLesson() {
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="你拖的端点" value={cfDrawn ? cfValue : "—"} unit="万元" />
-              <Tile label={`按对照涨幅应在 ${preYear}→${postYear}`} value={showCf ? box.counterfactual : "开参考线看"} unit="万元" tone="rose" />
-              <Tile label="差了多少" value={cfDrawn && showCf ? Math.round((cfValue - box.counterfactual) * 100) / 100 : "—"} unit="万元" tone={cfDrawn && showCf && Math.abs(cfValue - box.counterfactual) > 0.15 ? "rose" : "teal"} />
-              <Tile label="图上竖直距离＝估计" value={showCf ? box.att : "开参考线看"} unit="万元" tone="copper" />
+              <Tile label={`按对照涨幅应在 ${OPEN_YEAR}→${postYear}`} value={showCf ? cfAnchorEnd : "开参考线看"} unit="万元" tone="rose" />
+              <Tile label="差了多少" value={cfDrawn && showCf ? Math.round((cfValue - cfAnchorEnd) * 100) / 100 : "—"} unit="万元" tone={cfDrawn && showCf && Math.abs(cfValue - cfAnchorEnd) > 0.15 ? "rose" : "teal"} />
+              <Tile label="图上竖直距离＝估计" value={showCf ? Math.round((t1 - cfAnchorEnd) * 100) / 100 : "开参考线看"} unit="万元" tone="copper" />
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">
               {postYear} 年铜线（实际）与红色虚线（若不通车）之间的垂直距离，就是双重差分估计。反事实的意义正在于此：它是「缺的那一格」，现实中永远观测不到，只能借对照的涨幅补出来。
