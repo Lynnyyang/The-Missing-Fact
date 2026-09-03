@@ -333,7 +333,14 @@ function SynthLesson() {
         />
       )}
 
-      {step === 4 && (
+      {step === 4 && !eligible.length && (
+        <Panel title="安慰剂检验" hint="需要先有合格的供体城市。">
+          <Callout tone="rose">
+            篮子里还没有没被处理过的供体城市，没法跑安慰剂。回到「挑选城市」挑几座进来，并到「分配权重」点一次自动拟合。
+          </Callout>
+        </Panel>
+      )}
+      {step === 4 && eligible.length > 0 && (
         <>
           <Panel title="第一步：先拿一座城市试跑" hint="挑一座没改气的城市，假装它在 2014 年也改了气，用剩下的城市给它拼合成替身。">
             <p className="text-xs leading-relaxed text-muted-foreground">
