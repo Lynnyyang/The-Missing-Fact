@@ -87,7 +87,26 @@ function Hub() {
                 拖名额、重抽签、点学生换组、换对照街区、调供体权重、把政策年份改成假的。小果一直看着你刚点过什么。
               </p>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <Link
+                to="/basics"
+                className="panel group mt-6 block p-4 transition-colors hover:border-copper"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-copper">预备课 · 先玩这个</span>
+                  <span className={profile.visited.includes("basics-6") ? "text-xs text-teal" : "text-xs text-muted-foreground"}>
+                    {profile.visited.includes("basics-6")
+                      ? "已结课"
+                      : `${profile.visited.filter((v) => v.startsWith("basics-")).length}/6 页`}
+                  </span>
+                </div>
+                <h3 className="mt-2 text-lg font-semibold group-hover:text-copper">两个世界</h3>
+                <p className="text-xs text-copper">潜在结果与因果效应</p>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  翻牌看每个人的两格结果、掷硬币分组、拖自选倾向，把「观测差 ＝ ATT ＋ 选择偏差」玩出来，再进案例。
+                </p>
+              </Link>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {LESSONS.map((l, i) => {
                   const done = profile.visited.includes(`${l.key}-6`);
                   const pages = profile.visited.filter((v) => v.startsWith(`${l.key}-`)).length;
