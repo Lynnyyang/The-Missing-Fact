@@ -233,7 +233,7 @@ function DidLesson() {
       "一格一格搭进度（0-3）": buildStage,
       对照里是否含陷阱街区: hasTrap ? "含（金贸或机场边）" : "不含",
     },
-    hints: hints.length ? hints : ["点街区加减对照，四格和反事实虚线会立刻重算。"],
+    hints: hints.length ? hints : ["点街区加减对照，趋势线和估计会立刻重算。"],
   });
 
   const togglePick = (b: Block) => {
