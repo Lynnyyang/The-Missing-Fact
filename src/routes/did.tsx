@@ -164,9 +164,10 @@ function DidLesson() {
     return row;
   });
 
-  const cfValue = cfDrag || t0;
   const tOpen = avg(treated, OPEN_YEAR);
   const cOpen = chosen.length ? avg(chosen, OPEN_YEAR) : 0;
+  const cfValue = cfDrag || tOpen;
+  const cfAnchorEnd = chosen.length ? tOpen + (c1 - cOpen) : tOpen;
   const cfData = DID_YEARS.map((y) => {
     const cAvg = chosen.length ? avg(chosen, y) : 0;
     const cf = y >= OPEN_YEAR && chosen.length ? Math.round((tOpen + (cAvg - cOpen)) * 100) / 100 : null;
@@ -175,8 +176,8 @@ function DidLesson() {
       通车街区: Math.round(avg(treated, y) * 100) / 100,
       对照街区: chosen.length ? Math.round(cAvg * 100) / 100 : null,
       "若不通车（反事实）": showCf ? cf : null,
-      你拖出来的线: cfDrawn && chosen.length && (y === preYear || y === postYear)
-        ? Math.round((y === preYear ? t0 : cfValue) * 100) / 100
+      你拖出来的线: cfDrawn && chosen.length && (y === OPEN_YEAR || y === postYear)
+        ? Math.round((y === OPEN_YEAR ? tOpen : cfValue) * 100) / 100
         : null,
     };
   });
@@ -257,7 +258,7 @@ function DidLesson() {
   useEffect(() => {
     setCfDrawn(false);
     setCfDrag(0);
-  }, [picked, preYear, postYear]);
+  }, [picked, postYear]);
 
   const hints: string[] = [];
   if (chosen.length < 2) hints.push("至少选两个对照街区，一个街区的波动会直接进到估计里。");
@@ -652,7 +653,7 @@ function DidLesson() {
                 </span>
                 <input
                   type="range"
-                  min={Math.round((t0 - 0.5) * 20) / 20}
+                  min={Math.round((tOpen - 0.5) * 20) / 20}
                   max={Math.round((t1 + 0.2) * 20) / 20}
                   step={0.05}
                   value={cfValue}
@@ -667,17 +668,17 @@ function DidLesson() {
                 <span className="num text-sm text-copper">{cfDrawn ? fmt(cfValue) : "拖一下试试"}</span>
                 <Chip
                   onClick={() => {
-                    setCfDrag(Math.round(box.counterfactual * 100) / 100);
+                    setCfDrag(Math.round(cfAnchorEnd * 100) / 100);
                     setCfDrawn(true);
                     setShowCf(true);
-                    track("画出反事实", "按对照涨幅画出", fmt(box.counterfactual));
+                    track("画出反事实", "按对照涨幅画出", fmt(cfAnchorEnd));
                   }}
                 >
                   按对照的涨幅画出来
                 </Chip>
               </div>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                这条虚线的含义：从 {preYear} 年的 {fmt(t0)} 出发，按你自己的判断走到 {postYear} 年。
+                这条虚线的含义：从 {OPEN_YEAR} 年的 {fmt(tOpen)} 出发，按你自己的判断走到 {postYear} 年。
               </p>
             </div>
             <div className="h-72">
@@ -714,9 +715,9 @@ function DidLesson() {
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="你拖的端点" value={cfDrawn ? cfValue : "—"} unit="万元" />
-              <Tile label={`按对照涨幅应在 ${preYear}→${postYear}`} value={showCf ? box.counterfactual : "开参考线看"} unit="万元" tone="rose" />
-              <Tile label="差了多少" value={cfDrawn && showCf ? Math.round((cfValue - box.counterfactual) * 100) / 100 : "—"} unit="万元" tone={cfDrawn && showCf && Math.abs(cfValue - box.counterfactual) > 0.15 ? "rose" : "teal"} />
-              <Tile label="图上竖直距离＝估计" value={showCf ? box.att : "开参考线看"} unit="万元" tone="copper" />
+              <Tile label={`按对照涨幅应在 ${OPEN_YEAR}→${postYear}`} value={showCf ? cfAnchorEnd : "开参考线看"} unit="万元" tone="rose" />
+              <Tile label="差了多少" value={cfDrawn && showCf ? Math.round((cfValue - cfAnchorEnd) * 100) / 100 : "—"} unit="万元" tone={cfDrawn && showCf && Math.abs(cfValue - cfAnchorEnd) > 0.15 ? "rose" : "teal"} />
+              <Tile label="图上竖直距离＝估计" value={showCf ? Math.round((t1 - cfAnchorEnd) * 100) / 100 : "开参考线看"} unit="万元" tone="copper" />
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">
               {postYear} 年铜线（实际）与红色虚线（若不通车）之间的垂直距离，就是双重差分估计。反事实的意义正在于此：它是「缺的那一格」，现实中永远观测不到，只能借对照的涨幅补出来。
