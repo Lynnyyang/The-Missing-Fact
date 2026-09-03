@@ -452,9 +452,24 @@ function SynthLesson() {
           {ranAll && (
             <Panel title="第三步：校正拟合质量，再下结论" hint="有的安慰剂城市根本拟合不好，大缺口可能是“拼不出来”而不是“真有效果”。">
               <p className="text-xs leading-relaxed text-muted-foreground">
-                做法：把每座城市的 <span className="text-copper">|缺口| ÷ 改气前拟合误差</span> 算出来。
-                拟合越差，同样的缺口越不可信；用这个比值排队，看岚城排在哪。
+                做法：把每座城市的 <span className="text-copper">|缺口| ÷ 改气前拟合误差</span> 算出来，用这个比值排队，看岚城排在哪。
               </p>
+              <div className="mt-2 space-y-2 rounded-lg border border-border bg-card/40 p-3 text-xs leading-relaxed text-muted-foreground">
+                <p>
+                  <span className="font-medium text-foreground">为什么要除一下？</span>
+                  改气前拟合误差衡量的是“这座城到底有多好拼”。如果一座安慰剂城市在改气前本来就拼不准（误差大），
+                  那它在改气后掉出一个大缺口，很可能只是<span className="text-copper">拼不出来的噪音</span>，而不是真的发生了什么。
+                </p>
+                <p>
+                  举个例子：甲城缺口 −12、改气前误差 10，比值 1.2——它的缺口还没有平时的拼合误差大，不足为奇；
+                  岚城缺口 −20、改气前误差 2，比值 10——缺口是平时拼合误差的 10 倍，很难用“碰巧拼歪了”来解释。
+                  直接比缺口会把这两类城市混为一谈，除以各自的误差后，才是在同一杆秤上比较。
+                </p>
+                <p>
+                  这也是安慰剂检验里常用的校正思路：用每座城市自己的拟合误差当“尺子”，
+                  再问岚城按这把尺子量出来的缺口，在整群没改气的城市里还能排第几——排得越靠前，近似 p 值越小，“只是巧合”的解释就越站不住。
+                </p>
+              </div>
               <div className="mt-3 overflow-hidden rounded-lg border border-border">
                 <table className="w-full text-xs">
                   <thead>
