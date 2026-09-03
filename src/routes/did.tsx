@@ -17,8 +17,8 @@ import {
 import { LessonShell, type Step } from "@/components/Shell";
 import { Callout, Chip, GuessBox, Panel, Quiz, Tile, Toggle } from "@/components/kit";
 import { AutoReview } from "@/components/AutoReview";
-import { DID_YEARS, OPEN_YEAR, makeBlocks, type Block } from "@/lib/synth";
-import { did, fitLine, fmt, mean } from "@/lib/stats";
+import { DID_YEARS, OPEN_YEAR, makeBlocks, makePlaceboBlocks, type Block } from "@/lib/synth";
+import { did, fitLine, fmt, mean, rng } from "@/lib/stats";
 import { useApp, useCompanionSnapshot } from "@/state/app";
 
 export const Route = createFileRoute("/did")({
@@ -107,7 +107,7 @@ function DidLesson() {
   const { visit, track } = useApp();
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<string[]>(["hx", "nw"]);
-  const [fakeYear, setFakeYear] = useState(OPEN_YEAR);
+  const [fakeYear, setFakeYear] = useState(2016);
   const [postYear, setPostYear] = useState(2020);
   const [preYear, setPreYear] = useState(2017);
   const [trendStart, setTrendStart] = useState(2014);
@@ -119,6 +119,8 @@ function DidLesson() {
   const [buildStage, setBuildStage] = useState(0);
   const [cfDrag, setCfDrag] = useState(0); // 用户拖出来的反事实端点
   const [cfDrawn, setCfDrawn] = useState(false);
+  const [mcReps, setMcReps] = useState(200);
+  const [groupSeed, setGroupSeed] = useState(1);
 
   const blocks = useMemo(() => makeBlocks(), []);
   const treated = blocks.filter((b) => b.treated);
@@ -184,12 +186,69 @@ function DidLesson() {
     return { year: String(y), 缺口: Math.round(b.att * 100) / 100 };
   });
 
+  /* ---------- 安慰剂实验 ---------- */
+  const pool = useMemo(() => makePlaceboBlocks(), []);
+  const fakePre = fakeYear - 1;
+  const fakePost = fakeYear + 1;
   const fakeBox = did(
-    avg(treated, fakeYear - 1),
-    avg(treated, fakeYear),
-    chosen.length ? avg(chosen, fakeYear - 1) : 0,
-    chosen.length ? avg(chosen, fakeYear) : 0,
+    avg(treated, fakePre),
+    avg(treated, fakePost),
+    chosen.length ? avg(chosen, fakePre) : 0,
+    chosen.length ? avg(chosen, fakePost) : 0,
   );
+  const realBox = did(avg(treated, OPEN_YEAR - 1), avg(treated, OPEN_YEAR + 1), chosen.length ? avg(chosen, OPEN_YEAR - 1) : 0, chosen.length ? avg(chosen, OPEN_YEAR + 1) : 0);
+
+  const drawAtt = (rand: () => number, y0: number, y1: number) => {
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      const a = shuffled[i]!;
+      shuffled[i] = shuffled[j]!;
+      shuffled[j] = a;
+    }
+    const g1 = shuffled.slice(0, 4);
+    const g2 = shuffled.slice(4, 10);
+    const names = g1.map((b) => b.name).join("、");
+    const b = did(avg(g1, y0), avg(g1, y1), avg(g2, y0), avg(g2, y1));
+    return { att: b.att, names };
+  };
+
+  const monteCarlo = (y0: number, y1: number, reps: number, seed: number) => {
+    const rand = rng(seed);
+    const atts: number[] = [];
+    for (let i = 0; i < reps; i++) atts.push(drawAtt(rand, y0, y1).att);
+    return atts;
+  };
+
+  const pValue = (nulls: number[], obs: number) =>
+    (nulls.filter((v) => Math.abs(v) >= Math.abs(obs) - 1e-9).length + 1) / (nulls.length + 1);
+
+  const histOf = (nulls: number[], marks: number[]) => {
+    const all = [...nulls, ...marks];
+    const lo = Math.min(...all);
+    const hi = Math.max(...all);
+    const span = hi - lo || 1;
+    const bins = 15;
+    const counts = new Array(bins).fill(0) as number[];
+    nulls.forEach((v) => {
+      const k = Math.min(bins - 1, Math.floor(((v - lo) / span) * bins));
+      counts[k] = (counts[k] ?? 0) + 1;
+    });
+    return counts.map((c, i) => ({ x: fmt(lo + (span * (i + 0.5)) / bins, 2), 次数: c }));
+  };
+
+  const nullsFake = useMemo(() => monteCarlo(fakePre, fakePost, mcReps, 4001 + fakeYear), [fakeYear, mcReps, pool]);
+  const nullsReal = useMemo(() => monteCarlo(OPEN_YEAR - 1, OPEN_YEAR + 1, mcReps, 7717), [mcReps, pool]);
+  const pFake = pValue(nullsFake, fakeBox.att);
+  const pReal = pValue(nullsReal, realBox.att);
+  const fakeHist = histOf(nullsFake, [fakeBox.att]);
+  const nearestX = (hist: Array<{ x: string }>, v: number) =>
+    hist.reduce((best, d) => (Math.abs(Number(d.x) - v) < Math.abs(Number(best.x) - v) ? d : best), hist[0]!).x;
+
+  const randDraw = useMemo(() => drawAtt(rng(2200 + groupSeed * 37), OPEN_YEAR - 1, OPEN_YEAR + 1), [groupSeed, pool]);
+  const pRandom = pValue(nullsReal, randDraw.att);
+  const sigShare = nullsReal.filter((v) => pValue(nullsReal, v) < 0.05).length / (nullsReal.length || 1);
+  const randHist = histOf(nullsReal, [randDraw.att]);
 
   useEffect(() => {
     visit(STEPS[step]?.id ?? STEPS[0]!.id, 12);
@@ -214,8 +273,12 @@ function DidLesson() {
     hints.push(`对照通车前的房价水平比通车街区${levelGap < 0 ? "低" : "高"} ${fmt(Math.abs(levelGap))} 万元，这没关系，双重差分只借变化量。`);
   if (step === 3 && !hasTrap && chosen.length >= 2)
     hints.push(`通车前两条线的年斜率差是 ${fmt(parallelGap, 3)} 万元/年，越小越好。`);
-  if (step === 4 && fakeYear < OPEN_YEAR)
-    hints.push(`把通车年改成 ${fakeYear} 之后缺口是 ${fmt(fakeBox.att)}，真通车之前应该接近 0。`);
+  if (step === 4)
+    hints.push(
+      `把政策时间提前到 ${fakeYear} 年，估计是 ${fmt(fakeBox.att)}，p 值 ${fmt(pFake, 3)}；真通车年的估计是 ${fmt(realBox.att)}，p 值 ${fmt(pReal, 3)}。`,
+    );
+  if (step === 4 && pRandom >= 0.05)
+    hints.push(`这次随机指定的政策组估计是 ${fmt(randDraw.att)}，p 值 ${fmt(pRandom, 3)}，按 0.05 判不显著，这正是预期。`);
 
   useCompanionSnapshot({
     lesson: "银线通车（双重差分与匹配）",
@@ -240,8 +303,19 @@ function DidLesson() {
       对齐水平开关: alignLevel ? "已把对照线平移到同一水平" : "关",
       "参考线（反事实）": showCf ? "开" : "关（默认）",
       用户拖的反事实端点: cfDrawn ? fmt(cfValue) : "还没拖",
-      安慰剂通车年: fakeYear,
-      安慰剂缺口: fmt(fakeBox.att),
+      "安慰剂一·提前到的政策年": fakeYear,
+      "安慰剂一·对比的两年": `${fakePre} 与 ${fakePost}`,
+      "安慰剂一·估计": fmt(fakeBox.att),
+      "安慰剂一·p 值": fmt(pFake, 3),
+      "安慰剂一·是否显著": pFake < 0.05 ? "显著（不符合预期）" : "不显著（符合预期）",
+      "真政策年（2017 与 2019）的估计": fmt(realBox.att),
+      "真政策年的 p 值": fmt(pReal, 3),
+      蒙特卡洛次数: mcReps,
+      "安慰剂二·这次随机抽到的政策组": randDraw.names,
+      "安慰剂二·估计": fmt(randDraw.att),
+      "安慰剂二·p 值": fmt(pRandom, 3),
+      "安慰剂二·是否显著": pRandom < 0.05 ? "显著（不符合预期）" : "不显著（符合预期）",
+      "随机分组里被判显著的比例": `${fmt(sigShare * 100, 1)}%`,
       当前比法: compareMode === "post" ? "只比事后两组" : compareMode === "prepost" ? "只比通车街区前后" : "双重差分",
       当前比法给出的数: fmt(compareValue),
       "一格一格搭进度（0-3）": buildStage,
@@ -701,8 +775,109 @@ function DidLesson() {
 
       {step === 4 && (
         <>
-          <Panel title="逐年缺口" hint="真通车之前的柱子应当接近 0。">
-            <div className="h-64">
+          <Panel title="安慰剂实验要做什么" hint="安慰剂是「已知没有效应」的场合。若方法在那里也算出显著的数，说明算出来的东西不是政策效应。">
+            <p className="text-sm leading-relaxed">
+              下面做两件事：一是<span className="text-copper">把政策时间挪到真通车之前</span>，二是
+              <span className="text-copper">随机指定谁是政策组</span>。两次都应当算不出显著结果。显著性用蒙特卡洛做：
+              反复随机分组、每次重算一遍双重差分，得到「没有政策时估计会长什么样」的分布，再看真实估计落在哪儿。p 值就是分布中
+              绝对值不小于该估计的比例。
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[100, 200, 500].map((n) => (
+                <Chip
+                  key={n}
+                  active={mcReps === n}
+                  onClick={() => {
+                    setMcReps(n);
+                    track("安慰剂实验", "蒙特卡洛次数", String(n));
+                  }}
+                >
+                  随机 {n} 次
+                </Chip>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel title="安慰剂一：把政策时间提前" hint="选一个真通车之前的年份当假政策年，比它前一年与后一年。那时银线还没通，估计应当接近 0 且不显著。">
+            <div className="flex flex-wrap gap-2">
+              {[2015, 2016, 2017].map((y) => (
+                <Chip
+                  key={y}
+                  active={fakeYear === y}
+                  tone="rose"
+                  onClick={() => {
+                    setFakeYear(y);
+                    track("安慰剂实验", "提前到的政策年", String(y));
+                  }}
+                >
+                  假设 {y} 年通车
+                </Chip>
+              ))}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
+              <Tile label={`假设 ${fakeYear} 年通车的估计`} value={fmt(fakeBox.att)} unit="万元" tone={pFake < 0.05 ? "rose" : "teal"} sub={`比 ${fakePre} 与 ${fakePost} 两年`} />
+              <Tile label="它的 p 值" value={fmt(pFake, 3)} tone={pFake < 0.05 ? "rose" : "teal"} sub={pFake < 0.05 ? "显著，不符合预期" : "不显著，符合预期"} />
+              <Tile label="真政策年 2018 的估计" value={fmt(realBox.att)} unit="万元" tone="copper" sub="比 2017 与 2019 两年" />
+              <Tile label="它的 p 值" value={fmt(pReal, 3)} tone="copper" sub={pReal < 0.05 ? "显著" : "不显著"} />
+            </div>
+            <div className="mt-4 h-56">
+              <ResponsiveContainer>
+                <BarChart data={fakeHist}>
+                  <CartesianGrid stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="x" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
+                  <ReferenceLine x={nearestX(fakeHist, fakeBox.att)} stroke="var(--rose)" strokeDasharray="4 3" label={{ value: "假政策年的估计", fontSize: 10, fill: "var(--rose)", position: "top" }} />
+                  <Bar dataKey="次数" fill="var(--teal)" radius={2} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <Callout>
+              柱子是蒙特卡洛跑出来的「没有政策时」的估计分布，红虚线是假政策年算出的估计。它落在柱子中间，就说明这个数完全可以由噪声产生。
+            </Callout>
+          </Panel>
+
+          <Panel title="安慰剂二：随机指定政策组" hint="从与政策无关的街区池里随机抽 4 个当「政策组」、6 个当对照，仍用真政策年 2018 来算。">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="rounded-lg border border-copper bg-copper/10 px-3 py-1.5 text-xs text-copper"
+                onClick={() => {
+                  setGroupSeed((s) => s + 1);
+                  track("安慰剂实验", "随机指定政策组", `第 ${groupSeed + 1} 次`);
+                }}
+              >
+                随机抽一次政策组
+              </button>
+              <span className="num text-[11px] text-muted-foreground">已抽 {groupSeed} 次</span>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">这次抽到的「政策组」：{randDraw.names}</div>
+            <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
+              <Tile label="随机政策组的估计" value={fmt(randDraw.att)} unit="万元" tone={pRandom < 0.05 ? "rose" : "teal"} />
+              <Tile label="它的 p 值" value={fmt(pRandom, 3)} tone={pRandom < 0.05 ? "rose" : "teal"} sub={pRandom < 0.05 ? "显著，不符合预期" : "不显著，符合预期"} />
+              <Tile label={`${mcReps} 次随机里被判显著的比例`} value={`${fmt(sigShare * 100, 1)}%`} tone="teal" sub="应当接近 5%" />
+              <Tile label="真通车街区的估计" value={fmt(realBox.att)} unit="万元" tone="copper" sub={`p 值 ${fmt(pReal, 3)}`} />
+            </div>
+            <div className="mt-4 h-56">
+              <ResponsiveContainer>
+                <BarChart data={randHist}>
+                  <CartesianGrid stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="x" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
+                  <ReferenceLine x={nearestX(randHist, randDraw.att)} stroke="var(--copper)" strokeDasharray="4 3" label={{ value: "这次随机分组", fontSize: 10, fill: "var(--copper)", position: "top" }} />
+                  <Bar dataKey="次数" fill="var(--teal)" radius={2} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <Callout>
+              随机分组本来就没有政策，估计只在 0 附近晃，按 0.05 判显著的比例也就 5% 左右。真通车街区的估计 {fmt(realBox.att)} 万元远在这
+              个分布之外，才叫「显著」。
+            </Callout>
+          </Panel>
+
+          <Panel title="逐年缺口：另一种看法" hint="真通车之前的柱子应当接近 0，通车之后才抬起来。">
+            <div className="h-60">
               <ResponsiveContainer>
                 <BarChart data={yearly}>
                   <CartesianGrid stroke="var(--border)" vertical={false} />
@@ -722,28 +897,7 @@ function DidLesson() {
               </ResponsiveContainer>
             </div>
           </Panel>
-          <Panel title="把通车年改成假的" hint="选一个真通车之前的年份，缺口应当靠近 0。">
-            <div className="flex flex-wrap gap-2">
-              {DID_YEARS.slice(1).map((y) => (
-                <Chip
-                  key={y}
-                  active={fakeYear === y}
-                  tone={y < OPEN_YEAR ? "rose" : "copper"}
-                  onClick={() => {
-                    setFakeYear(y);
-                    track("安慰剂实验", "假的通车年", String(y));
-                  }}
-                >
-                  {y}
-                </Chip>
-              ))}
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Tile label={`假设 ${fakeYear} 年通车的缺口`} value={fakeBox.att} unit="万元" tone={Math.abs(fakeBox.att) > 0.1 && fakeYear < OPEN_YEAR ? "rose" : "teal"} />
-              <Tile label="真通车年的缺口" value={box.att} unit="万元" tone="copper" />
-            </div>
-          </Panel>
-          <Panel title="换掉对照，再看一眼逐年缺口" hint="对照换了，柱子会跟着变。">
+          <Panel title="换掉对照，再看一眼" hint="对照换了，上面的估计和柱子都会跟着变。">
             <ControlPicker
               controls={controls}
               picked={picked}
