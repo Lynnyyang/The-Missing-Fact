@@ -435,6 +435,37 @@ function BasicsLesson() {
           <Panel
             title="为什么不能直接相减？"
             hint="换几种分组方式，再打开上帝视角，看观测到的均值差里混进了多少‘底子差’。"
+            right={
+              <div className="flex flex-wrap justify-end gap-2">
+                <Chip
+                  active={naiveMode === "random"}
+                  onClick={() => {
+                    setNaiveMode("random");
+                    track("缺失的一半", "分组方式", "随机分组");
+                  }}
+                >
+                  随机分组
+                </Chip>
+                <Chip
+                  active={naiveMode === "highY0"}
+                  onClick={() => {
+                    setNaiveMode("highY0");
+                    track("缺失的一半", "分组方式", "成绩好的优先");
+                  }}
+                >
+                  成绩好的优先
+                </Chip>
+                <Chip
+                  active={naiveMode === "highEffect"}
+                  onClick={() => {
+                    setNaiveMode("highEffect");
+                    track("缺失的一半", "分组方式", "觉得自己进步大的优先");
+                  }}
+                >
+                  觉得自己进步大的优先
+                </Chip>
+              </div>
+            }
           >
             <Toggle
               label="上帝视角：看到没发生的那一格"
