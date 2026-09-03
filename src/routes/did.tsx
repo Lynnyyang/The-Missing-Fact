@@ -117,6 +117,8 @@ function DidLesson() {
   const [effectRevealed, setEffectRevealed] = useState(false);
   const [compareMode, setCompareMode] = useState<"post" | "prepost" | "did">("post");
   const [buildStage, setBuildStage] = useState(0);
+  const [cfDrag, setCfDrag] = useState(0); // 用户拖出来的反事实端点
+  const [cfDrawn, setCfDrawn] = useState(false);
 
   const blocks = useMemo(() => makeBlocks(), []);
   const treated = blocks.filter((b) => b.treated);
@@ -191,6 +193,11 @@ function DidLesson() {
     setEffectRevealed(false);
   }, [picked, preYear, postYear, step]);
 
+  useEffect(() => {
+    setCfDrawn(false);
+    setCfDrag(0);
+  }, [picked, preYear, postYear]);
+
   const hints: string[] = [];
   if (chosen.length < 2) hints.push("至少选两个对照街区，一个街区的波动会直接进到估计里。");
   if (hasTrap)
@@ -199,7 +206,7 @@ function DidLesson() {
     );
   if (Math.abs(levelGap) > 0.2)
     hints.push(`对照通车前的房价水平比通车街区${levelGap < 0 ? "低" : "高"} ${fmt(Math.abs(levelGap))} 万元，这没关系，双重差分只借变化量。`);
-  if (step === 2 && !hasTrap && chosen.length >= 2)
+  if (step === 3 && !hasTrap && chosen.length >= 2)
     hints.push(`通车前两条线的年斜率差是 ${fmt(parallelGap, 3)} 万元/年，越小越好。`);
   if (step === 4 && fakeYear < OPEN_YEAR)
     hints.push(`把通车年改成 ${fakeYear} 之后缺口是 ${fmt(fakeBox.att)}，真通车之前应该接近 0。`);
