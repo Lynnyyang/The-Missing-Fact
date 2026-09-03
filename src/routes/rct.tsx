@@ -496,15 +496,13 @@ function RctLesson() {
             <div className="mt-4 flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
               <span className="w-16 shrink-0" />
               <span className="w-10 shrink-0" />
-              <span className="relative h-4 min-w-0 flex-1">
+              <span className="relative h-8 min-w-0 flex-1">
+                <span className="absolute left-1/2 top-0 -translate-x-1/2">期末科学测验（分）</span>
                 {[40, 60, 80, 100].map((v) => (
-                  <span key={v} className="absolute top-0 -translate-x-1/2 num" style={{ left: `${((v - 40) / 60) * 100}%` }}>
+                  <span key={v} className="absolute bottom-0 -translate-x-1/2 num" style={{ left: `${((v - 40) / 60) * 100}%` }}>
                     {v}
                   </span>
                 ))}
-                <span className="absolute left-1/2 top-0 -translate-x-1/2" style={{ transform: "translate(-50%, 0)" }}>
-                  期末科学测验（分）
-                </span>
               </span>
               <span className="w-24 shrink-0" />
             </div>
