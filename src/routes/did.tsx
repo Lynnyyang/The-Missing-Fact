@@ -544,9 +544,12 @@ function DidLesson() {
         </>
       )}
 
-      {step === 3 && (
+      {step === 2 && (
         <>
-          <Panel title="画出反事实虚线" hint="虚线表示通车街区若不通车，会按对照的涨幅走到哪里。">
+          <Panel
+            title="在图上亲手拖出反事实"
+            hint="反事实是看不见的：通车街区若不通车，事后会走到哪里？先拖滑杆猜一个位置，再按对照的涨幅画出来对照。"
+          >
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="text-[11px] text-muted-foreground">事后取</span>
               {DID_YEARS.filter((y) => y >= OPEN_YEAR).map((y) => (
@@ -570,6 +573,41 @@ function DidLesson() {
                 }}
               />
             </div>
+            <div className="mb-3 panel px-3 py-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-[11px] text-muted-foreground">
+                  拖动这条深色虚线：你觉得 {postYear} 年若不通车会在哪？
+                </span>
+                <input
+                  type="range"
+                  min={Math.round((t0 - 0.5) * 20) / 20}
+                  max={Math.round((t1 + 0.2) * 20) / 20}
+                  step={0.05}
+                  value={cfValue}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setCfDrag(v);
+                    setCfDrawn(true);
+                    track("画出反事实", "拖反事实端点", fmt(v));
+                  }}
+                  className="w-56 accent-[var(--copper)]"
+                />
+                <span className="num text-sm text-copper">{cfDrawn ? fmt(cfValue) : "拖一下试试"}</span>
+                <Chip
+                  onClick={() => {
+                    setCfDrag(Math.round(box.counterfactual * 100) / 100);
+                    setCfDrawn(true);
+                    setShowCf(true);
+                    track("画出反事实", "按对照涨幅画出", fmt(box.counterfactual));
+                  }}
+                >
+                  按对照的涨幅画出来
+                </Chip>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                这条虚线的含义：从 {preYear} 年的 {fmt(t0)} 出发，按你自己的判断走到 {postYear} 年。
+              </p>
+            </div>
             <div className="h-72">
               <ResponsiveContainer>
                 <LineChart data={cfData}>
@@ -590,11 +628,26 @@ function DidLesson() {
                     dot={false}
                     connectNulls
                   />
+                  <Line
+                    type="monotone"
+                    dataKey="你拖出来的线"
+                    stroke="var(--foreground)"
+                    strokeWidth={2}
+                    strokeDasharray="2 3"
+                    dot={{ r: 4 }}
+                    connectNulls
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Tile label="你拖的端点" value={cfDrawn ? cfValue : "—"} unit="万元" />
+              <Tile label={`按对照涨幅应在 ${preYear}→${postYear}`} value={showCf ? box.counterfactual : "开虚线看"} unit="万元" tone="rose" />
+              <Tile label="差了多少" value={cfDrawn && showCf ? Math.round((cfValue - box.counterfactual) * 100) / 100 : "—"} unit="万元" tone={cfDrawn && showCf && Math.abs(cfValue - box.counterfactual) > 0.15 ? "rose" : "teal"} />
+              <Tile label="图上竖直距离＝估计" value={showCf ? box.att : "开虚线看"} unit="万元" tone="copper" />
+            </div>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              {postYear} 年铜线与红色虚线之间的垂直距离，就是双重差分估计。
+              {postYear} 年铜线（实际）与红色虚线（若不通车）之间的垂直距离，就是双重差分估计。反事实的意义正在于此：它是「缺的那一格」，现实中永远观测不到，只能借对照的涨幅补出来。
             </p>
           </Panel>
 
