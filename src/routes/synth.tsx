@@ -327,33 +327,163 @@ function SynthLesson() {
       )}
 
       {step === 4 && (
-        <Panel title="让别的城市假装改气" hint="岚城要比大多数安慰剂更突出，缺口才算说得过去。">
-          <div className="flex flex-wrap gap-2">
-            {donorsAll
-              .filter((c) => on.includes(c.key))
-              .map((c) => (
+        <>
+          <Panel title="第一步：先拿一座城市试跑" hint="挑一座没改气的城市，假装它在 2014 年也改了气，用剩下的城市给它拼合成替身。">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              这座城市其实没改气，如果它也冒出大缺口，说明“缺口”这种事光靠巧合就能发生，岚城的缺口就没那么稀奇了。
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {eligible.map((c) => (
                 <Chip
                   key={c.key}
                   active={placebo === c.key}
                   onClick={() => {
                     setPlacebo(placebo === c.key ? null : c.key);
-                    track("安慰剂检验", "假装改气的城市", c.name);
+                    track("安慰剂检验", "第一步·试跑城市", c.name);
                   }}
                 >
                   {c.name}
                 </Chip>
               ))}
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Tile label="岚城缺口" value={gapNow} unit="μg/m³" tone="copper" />
-            <Tile
-              label={placeboCity ? `${placeboCity.name} 缺口` : "还没选安慰剂"}
-              value={placeboFit ? placeboFit.gap : "—"}
-              unit={placeboFit ? "μg/m³" : ""}
-              tone={placeboFit && Math.abs(placeboFit.gap) > Math.abs(gapNow) ? "rose" : "teal"}
-            />
-          </div>
-        </Panel>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Tile label="岚城缺口" value={gapNow} unit="μg/m³" tone="copper" />
+              <Tile
+                label={placeboCity ? `${placeboCity.name} 假装改气的缺口` : "还没选安慰剂"}
+                value={placeboFit ? placeboFit.gap : "—"}
+                unit={placeboFit ? "μg/m³" : ""}
+                tone={placeboFit && Math.abs(placeboFit.gap) > Math.abs(gapNow) ? "rose" : "teal"}
+              />
+            </div>
+            {placeboFit && Math.abs(placeboFit.gap) > Math.abs(gapNow) && (
+              <div className="mt-3">
+                <Callout tone="rose">
+                  {placeboCity!.name} 没改气也掉出这么大的缺口——光看这一座城，岚城的结果就可能只是巧合。
+                </Callout>
+              </div>
+            )}
+          </Panel>
+
+          <Panel
+            title="第二步：让所有安慰剂一起跑"
+            hint="一座城碰巧不算数，要看整群。把每座合格供体城市轮流当成“假岚城”，各跑一次。"
+            right={
+              <button
+                type="button"
+                onClick={() => {
+                  setRanAll(true);
+                  track("安慰剂检验", "第二步·跑全部安慰剂", `${eligible.length} 座城市`);
+                }}
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+              >
+                跑全部安慰剂
+              </button>
+            }
+          >
+            {!ranAll && (
+              <p className="text-xs text-muted-foreground">
+                点右上按钮，对 {eligible.length} 座没被处理过的供体城市各做一次完整合成，比较它们的缺口和岚城的 {fmt(gapNow, 1)}。
+              </p>
+            )}
+            {ranAll && (
+              <>
+                <div className="h-56">
+                  <ResponsiveContainer>
+                    <BarChart
+                      data={[...placeboAll]
+                        .sort((a, b) => a.gap - b.gap)
+                        .map((r) => ({ name: r.city.name, 缺口: Math.round(r.gap * 10) / 10 }))
+                        .concat([{ name: "岚城", 缺口: Math.round(gapNow * 10) / 10 }])
+                        .sort((a, b) => a.缺口 - b.缺口)}
+                    >
+                      <CartesianGrid stroke="var(--border)" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                      <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                      <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
+                      <ReferenceLine y={0} stroke="var(--border)" />
+                      <Bar dataKey="缺口" radius={[4, 4, 0, 0]}>
+                        {[...placeboAll.map((r) => ({ name: r.city.name })), { name: "岚城" }].map((e) => (
+                          <Cell key={e.name} fill={e.name === "岚城" ? "var(--copper)" : "var(--muted-foreground)"} fillOpacity={e.name === "岚城" ? 1 : 0.45} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <Tile label="岚城缺口" value={gapNow} unit="μg/m³" tone="copper" />
+                  <Tile label="比岚城更极端的安慰剂" value={`${moreExtreme} / ${placeboAll.length}`} tone={moreExtreme === 0 ? "teal" : "rose"} />
+                  <Tile label="岚城极端程度排名" value={`第 ${moreExtreme + 1} / ${totalUnits}`} tone={moreExtreme === 0 ? "teal" : "copper"} />
+                </div>
+                <label className="mt-3 flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={showAllPaths}
+                    onChange={(e) => {
+                      setShowAllPaths(e.target.checked);
+                      track("安慰剂检验", "把全部安慰剂路径画到图上", e.target.checked ? "开" : "关");
+                    }}
+                  />
+                  把全部安慰剂路径画到上面的图里（灰色细线）
+                </label>
+              </>
+            )}
+          </Panel>
+
+          {ranAll && (
+            <Panel title="第三步：校正拟合质量，再下结论" hint="有的安慰剂城市根本拟合不好，大缺口可能是“拼不出来”而不是“真有效果”。">
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                做法：把每座城市的 <span className="text-copper">|缺口| ÷ 改气前拟合误差</span> 算出来。
+                拟合越差，同样的缺口越不可信；用这个比值排队，看岚城排在哪。
+              </p>
+              <div className="mt-3 overflow-hidden rounded-lg border border-border">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-card text-muted-foreground">
+                      <th className="px-3 py-2 text-left font-medium">城市</th>
+                      <th className="px-3 py-2 text-right font-medium">缺口</th>
+                      <th className="px-3 py-2 text-right font-medium">改气前误差</th>
+                      <th className="px-3 py-2 text-right font-medium">|缺口|÷误差</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[{ name: "岚城", gap: gapNow, preRmse: preFit, ratio: lanRatio, isLan: true }]
+                      .concat(placeboAll.map((r) => ({ name: r.city.name, gap: r.gap, preRmse: r.preRmse, ratio: r.ratio, isLan: false })))
+                      .sort((a, b) => b.ratio - a.ratio)
+                      .map((r) => (
+                        <tr key={r.name} className={r.isLan ? "bg-copper/10 text-copper" : "border-t border-border"}>
+                          <td className="px-3 py-1.5">{r.name}{r.isLan ? "（真改气）" : ""}</td>
+                          <td className="num px-3 py-1.5 text-right">{fmt(r.gap, 1)}</td>
+                          <td className="num px-3 py-1.5 text-right">{fmt(r.preRmse, 2)}</td>
+                          <td className="num px-3 py-1.5 text-right">{fmt(r.ratio, 1)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Tile label="岚城的校正比值排名" value={`第 ${ratioMoreExtreme + 1} / ${totalUnits}`} tone={ratioMoreExtreme === 0 ? "teal" : "rose"} />
+                <Tile
+                  label="近似 p 值"
+                  value={approxP !== null ? fmt(approxP, 2) : "—"}
+                  tone={approxP !== null && approxP <= 0.2 ? "teal" : "rose"}
+                />
+              </div>
+              <div className="mt-3">
+                {approxP !== null && approxP <= 0.2 ? (
+                  <Callout>
+                    结论：{totalUnits} 座城市里只有约 {fmt(approxP * 100, 0)}% 能碰巧掉出像岚城这么规整的缺口。
+                    空气变好大概率不是巧合，煤改气的估计站得住——但前提仍是改气前拟合贴、供体池干净。
+                  </Callout>
+                ) : (
+                  <Callout tone="rose">
+                    结论：近似 p 值 {approxP !== null ? fmt(approxP, 2) : "—"}，没改气的城市里也有不少能掉出类似缺口。
+                    岚城的下降还挡不住“只是巧合”的解释，先回去检查供体池和改气前拟合，再谈效果。
+                  </Callout>
+                )}
+              </div>
+            </Panel>
+          )}
+        </>
       )}
 
       {step === 5 && (
