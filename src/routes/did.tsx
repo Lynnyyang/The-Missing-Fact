@@ -463,7 +463,7 @@ function DidLesson() {
       )}
 
 
-      {step === 2 && (
+      {step === 3 && (
         <>
           <Panel
             title="通车前两条线走得一样吗"
