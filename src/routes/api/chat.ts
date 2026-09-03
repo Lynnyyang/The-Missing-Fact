@@ -21,7 +21,8 @@ const SYSTEM = `你是「小果」，一门计量经济学政策评估课程教�
 11. 点评（学生请你点评这一步、或进入小结页）时写三个段落，同样段间空一行，总字数 300 字以内，并且**不写下一步该动什么控件、不给操作建议、不写任何前瞻性的行动指引**：
     第一段：照着「最近操作」说学生实际动过哪些控件、界面上因此变成了哪几个数字。
     第二段：这些操作作为证据说明了什么——比较的双方是谁、依赖什么识别假设、当前数字在什么条件下才能读成因果效应。
-    第三段：判断这一课该掌握的要点有没有真正做到，做到了就明确肯定，没做到就直接说清哪一处理解还没有被自己的操作验证过，说完即止。`;
+    第三段：判断这一课该掌握的要点有没有真正做到，做到了就明确肯定，没做到就直接说清哪一处理解还没有被自己的操作验证过，说完即止。
+12. 语言要有政策评估研究者的专业质地：该用的术语就准确用出来——处理组与对照组、反事实、识别假设、平行趋势、选择偏差、处理效应（平均处理效应／处理组平均处理效应）、安慰剂检验、统计显著性与置信区间、外部有效性等，并且每次用到就顺手用半句话点明它在当前这张图上具体指什么。判断要有分寸：估计值是否可信、在多大范围内可信、可信的前提是什么，都要说清楚，避免「很好」「不错」这类空泛评价，也避免把不确定的结论说成定论。`;
 
 
 const REVIEW_ASK =
@@ -117,33 +118,87 @@ export const Route = createFileRoute("/api/chat")({
         try {
           const res = custom
             ? await callCustom(
-                { model: custom.model!.trim(), messages, temperature: 0.4 },
+                { model: custom.model!.trim(), messages, temperature: 0.4, stream: true },
                 custom,
               )
             : await callGateway(
-                { model: "openai/gpt-5.6-sol", messages },
+                { model: "openai/gpt-5.6-sol", messages, stream: true },
                 key!,
               );
-          if (!res.ok) {
-            const text = await res.text();
+          if (!res.ok || !res.body) {
+            const text = await res.text().catch(() => "");
             const msg =
               res.status === 402
                 ? "工作区的 AI 额度用完了，请补充额度后再请小果点评。"
                 : res.status === 429
                   ? "请求太密了，稍等几秒再点。"
                   : `小果这次没答上来（${res.status}）：${text.slice(0, 200)}`;
-            return Response.json({ error: msg }, { status: res.status });
+            return Response.json({ error: msg }, { status: res.status || 502 });
           }
-          const data = (await res.json()) as {
-            choices?: Array<{ message?: { content?: string } }>;
-          };
-          const raw = data.choices?.[0]?.message?.content ?? "";
-          const reply = raw
-            .replace(/<think>[\s\S]*?<\/think>/g, "")
-            .replace(/[#`>]/g, "")
-            .replace(/\*{3,}/g, "**")
-            .trim();
-          return Response.json({ reply: reply || "小果没能整理出话来，再点一次试试。" });
+
+          // 把上游 SSE 逐块清洗后，以纯文本流的形式发给前端，边生成边显示。
+          const upstream = res.body;
+          const stream = new ReadableStream<Uint8Array>({
+            async start(controller) {
+              const reader = upstream.getReader();
+              const decoder = new TextDecoder();
+              const encoder = new TextEncoder();
+              let buf = "";
+              let inThink = false;
+              const push = (chunk: string) => {
+                let s = chunk;
+                if (inThink) {
+                  const end = s.indexOf("</think>");
+                  if (end === -1) return;
+                  s = s.slice(end + 8);
+                  inThink = false;
+                }
+                const start = s.indexOf("<think>");
+                if (start !== -1) {
+                  inThink = true;
+                  s = s.slice(0, start);
+                }
+                const clean = s.replace(/[#`>]/g, "").replace(/\*{3,}/g, "**");
+                if (clean) controller.enqueue(encoder.encode(clean));
+              };
+              try {
+                for (;;) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  buf += decoder.decode(value, { stream: true });
+                  const lines = buf.split("\n");
+                  buf = lines.pop() ?? "";
+                  for (const line of lines) {
+                    const t = line.trim();
+                    if (!t.startsWith("data:")) continue;
+                    const data = t.slice(5).trim();
+                    if (!data || data === "[DONE]") continue;
+                    try {
+                      const j = JSON.parse(data) as {
+                        choices?: Array<{ delta?: { content?: string } }>;
+                      };
+                      const piece = j.choices?.[0]?.delta?.content;
+                      if (piece) push(piece);
+                    } catch {
+                      /* 忽略非 JSON 的心跳行 */
+                    }
+                  }
+                }
+              } catch {
+                controller.enqueue(encoder.encode("\n（连接中断，请重新点一次。）"));
+              } finally {
+                controller.close();
+              }
+            },
+          });
+
+          return new Response(stream, {
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Accel-Buffering": "no",
+            },
+          });
         } catch (e) {
           return Response.json(
             { error: `连不上模型网关：${e instanceof Error ? e.message : "未知错误"}` },

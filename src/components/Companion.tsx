@@ -50,9 +50,37 @@ export function Companion() {
           llm,
         }),
       });
-      const data = (await res.json()) as { reply?: string; error?: string };
-      if (!res.ok || data.error) setError(data.error ?? "小果暂时没答上来。");
-      else setTurns((prev) => [...prev, { role: "assistant", content: data.reply ?? "" }]);
+      const ct = res.headers.get("Content-Type") ?? "";
+      if (!res.ok || !res.body || ct.includes("application/json")) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? "小果暂时没答上来。");
+        return;
+      }
+      // 流式：先插入一条空的助手发言，再随字流入不断补写。
+      setTurns((prev) => [...prev, { role: "assistant", content: "" }]);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let acc = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(value, { stream: true });
+        setTurns((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = { role: "assistant", content: acc };
+          return next;
+        });
+      }
+      if (!acc.trim()) {
+        setTurns((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = {
+            role: "assistant",
+            content: "小果没能整理出话来，再点一次试试。",
+          };
+          return next;
+        });
+      }
     } catch {
       setError("网络没通，稍后再点。");
     } finally {
