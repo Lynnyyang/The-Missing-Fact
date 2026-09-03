@@ -773,8 +773,109 @@ function DidLesson() {
 
       {step === 4 && (
         <>
-          <Panel title="逐年缺口" hint="真通车之前的柱子应当接近 0。">
-            <div className="h-64">
+          <Panel title="安慰剂实验要做什么" hint="安慰剂是「已知没有效应」的场合。若方法在那里也算出显著的数，说明算出来的东西不是政策效应。">
+            <p className="text-sm leading-relaxed">
+              下面做两件事：一是<span className="text-copper">把政策时间挪到真通车之前</span>，二是
+              <span className="text-copper">随机指定谁是政策组</span>。两次都应当算不出显著结果。显著性用蒙特卡洛做：
+              反复随机分组、每次重算一遍双重差分，得到「没有政策时估计会长什么样」的分布，再看真实估计落在哪儿。p 值就是分布中
+              绝对值不小于该估计的比例。
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[100, 200, 500].map((n) => (
+                <Chip
+                  key={n}
+                  active={mcReps === n}
+                  onClick={() => {
+                    setMcReps(n);
+                    track("安慰剂实验", "蒙特卡洛次数", String(n));
+                  }}
+                >
+                  随机 {n} 次
+                </Chip>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel title="安慰剂一：把政策时间提前" hint="选一个真通车之前的年份当假政策年，比它前一年与后一年。那时银线还没通，估计应当接近 0 且不显著。">
+            <div className="flex flex-wrap gap-2">
+              {[2015, 2016, 2017].map((y) => (
+                <Chip
+                  key={y}
+                  active={fakeYear === y}
+                  tone="rose"
+                  onClick={() => {
+                    setFakeYear(y);
+                    track("安慰剂实验", "提前到的政策年", String(y));
+                  }}
+                >
+                  假设 {y} 年通车
+                </Chip>
+              ))}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
+              <Tile label={`假设 ${fakeYear} 年通车的估计`} value={fmt(fakeBox.att)} unit="万元" tone={pFake < 0.05 ? "rose" : "teal"} sub={`比 ${fakePre} 与 ${fakePost} 两年`} />
+              <Tile label="它的 p 值" value={fmt(pFake, 3)} tone={pFake < 0.05 ? "rose" : "teal"} sub={pFake < 0.05 ? "显著，不符合预期" : "不显著，符合预期"} />
+              <Tile label="真政策年 2018 的估计" value={fmt(realBox.att)} unit="万元" tone="copper" sub="比 2017 与 2019 两年" />
+              <Tile label="它的 p 值" value={fmt(pReal, 3)} tone="copper" sub={pReal < 0.05 ? "显著" : "不显著"} />
+            </div>
+            <div className="mt-4 h-56">
+              <ResponsiveContainer>
+                <BarChart data={fakeHist}>
+                  <CartesianGrid stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="x" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
+                  <ReferenceLine x={fmt(fakeBox.att, 2)} stroke="var(--rose)" strokeDasharray="4 3" label={{ value: "假政策年的估计", fontSize: 10, fill: "var(--rose)", position: "top" }} />
+                  <Bar dataKey="次数" fill="var(--teal)" radius={2} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <Callout>
+              柱子是蒙特卡洛跑出来的「没有政策时」的估计分布，红虚线是假政策年算出的估计。它落在柱子中间，就说明这个数完全可以由噪声产生。
+            </Callout>
+          </Panel>
+
+          <Panel title="安慰剂二：随机指定政策组" hint="从与政策无关的街区池里随机抽 4 个当「政策组」、6 个当对照，仍用真政策年 2018 来算。">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="rounded-lg border border-copper bg-copper/10 px-3 py-1.5 text-xs text-copper"
+                onClick={() => {
+                  setGroupSeed((s) => s + 1);
+                  track("安慰剂实验", "随机指定政策组", `第 ${groupSeed + 1} 次`);
+                }}
+              >
+                随机抽一次政策组
+              </button>
+              <span className="num text-[11px] text-muted-foreground">已抽 {groupSeed} 次</span>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">这次抽到的「政策组」：{randDraw.names}</div>
+            <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
+              <Tile label="随机政策组的估计" value={fmt(randDraw.att)} unit="万元" tone={pRandom < 0.05 ? "rose" : "teal"} />
+              <Tile label="它的 p 值" value={fmt(pRandom, 3)} tone={pRandom < 0.05 ? "rose" : "teal"} sub={pRandom < 0.05 ? "显著，不符合预期" : "不显著，符合预期"} />
+              <Tile label={`${mcReps} 次随机里被判显著的比例`} value={`${fmt(sigShare * 100, 1)}%`} tone="teal" sub="应当接近 5%" />
+              <Tile label="真通车街区的估计" value={fmt(realBox.att)} unit="万元" tone="copper" sub={`p 值 ${fmt(pReal, 3)}`} />
+            </div>
+            <div className="mt-4 h-56">
+              <ResponsiveContainer>
+                <BarChart data={randHist}>
+                  <CartesianGrid stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="x" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", fontSize: 12 }} />
+                  <ReferenceLine x={fmt(randDraw.att, 2)} stroke="var(--copper)" strokeDasharray="4 3" label={{ value: "这次随机分组", fontSize: 10, fill: "var(--copper)", position: "top" }} />
+                  <Bar dataKey="次数" fill="var(--teal)" radius={2} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <Callout>
+              随机分组本来就没有政策，估计只在 0 附近晃，按 0.05 判显著的比例也就 5% 左右。真通车街区的估计 {fmt(realBox.att)} 万元远在这
+              个分布之外，才叫「显著」。
+            </Callout>
+          </Panel>
+
+          <Panel title="逐年缺口：另一种看法" hint="真通车之前的柱子应当接近 0，通车之后才抬起来。">
+            <div className="h-60">
               <ResponsiveContainer>
                 <BarChart data={yearly}>
                   <CartesianGrid stroke="var(--border)" vertical={false} />
@@ -794,28 +895,7 @@ function DidLesson() {
               </ResponsiveContainer>
             </div>
           </Panel>
-          <Panel title="把通车年改成假的" hint="选一个真通车之前的年份，缺口应当靠近 0。">
-            <div className="flex flex-wrap gap-2">
-              {DID_YEARS.slice(1).map((y) => (
-                <Chip
-                  key={y}
-                  active={fakeYear === y}
-                  tone={y < OPEN_YEAR ? "rose" : "copper"}
-                  onClick={() => {
-                    setFakeYear(y);
-                    track("安慰剂实验", "假的通车年", String(y));
-                  }}
-                >
-                  {y}
-                </Chip>
-              ))}
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Tile label={`假设 ${fakeYear} 年通车的缺口`} value={fakeBox.att} unit="万元" tone={Math.abs(fakeBox.att) > 0.1 && fakeYear < OPEN_YEAR ? "rose" : "teal"} />
-              <Tile label="真通车年的缺口" value={box.att} unit="万元" tone="copper" />
-            </div>
-          </Panel>
-          <Panel title="换掉对照，再看一眼逐年缺口" hint="对照换了，柱子会跟着变。">
+          <Panel title="换掉对照，再看一眼" hint="对照换了，上面的估计和柱子都会跟着变。">
             <ControlPicker
               controls={controls}
               picked={picked}
