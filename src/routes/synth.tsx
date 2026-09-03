@@ -173,7 +173,7 @@ function SynthLesson() {
       被处理过却仍在篮子里的城市: badIncluded.map((c) => c.name).join("、") || "无",
       权重: norm.map((n) => `${n.city.name} ${fmt(n.w, 2)}`).join("，"),
       "改气前拟合误差（越小越贴）": fmt(preFit, 2),
-      "最后一年缺口（μg/m³）": fmt(gapNow, 1),
+      "最后一年缺口（μg/m³）": step === 3 && !gapRevealed ? "未揭示（等待用户先猜）" : fmt(gapNow, 1),
       安慰剂城市: placeboCity?.name ?? "还没跑",
       安慰剂缺口: placeboFit ? fmt(placeboFit.gap, 1) : "—",
       全部安慰剂: ranAll ? `已跑 ${placeboAll.length} 个` : "还没跑",
