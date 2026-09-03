@@ -113,7 +113,7 @@ function DidLesson() {
   const [trendStart, setTrendStart] = useState(2014);
   const [alignLevel, setAlignLevel] = useState(false);
   const [showEach, setShowEach] = useState(false);
-  const [showCf, setShowCf] = useState(true);
+  const [showCf, setShowCf] = useState(false);
   const [effectRevealed, setEffectRevealed] = useState(false);
   const [compareMode, setCompareMode] = useState<"post" | "prepost" | "did">("post");
   const [buildStage, setBuildStage] = useState(0);
@@ -163,9 +163,11 @@ function DidLesson() {
   });
 
   const cfValue = cfDrag || t0;
+  const tOpen = avg(treated, OPEN_YEAR);
+  const cOpen = chosen.length ? avg(chosen, OPEN_YEAR) : 0;
   const cfData = DID_YEARS.map((y) => {
     const cAvg = chosen.length ? avg(chosen, y) : 0;
-    const cf = y >= preYear && chosen.length ? Math.round((t0 + (cAvg - c0)) * 100) / 100 : null;
+    const cf = y >= OPEN_YEAR && chosen.length ? Math.round((tOpen + (cAvg - cOpen)) * 100) / 100 : null;
     return {
       year: String(y),
       通车街区: Math.round(avg(treated, y) * 100) / 100,
@@ -236,7 +238,7 @@ function DidLesson() {
       通车前趋势起算年: trendStart,
       通车前年斜率差: fmt(parallelGap, 3),
       对齐水平开关: alignLevel ? "已把对照线平移到同一水平" : "关",
-      反事实虚线: showCf ? "显示" : "隐藏",
+      "参考线（反事实）": showCf ? "开" : "关（默认）",
       用户拖的反事实端点: cfDrawn ? fmt(cfValue) : "还没拖",
       安慰剂通车年: fakeYear,
       安慰剂缺口: fmt(fakeBox.att),
@@ -565,11 +567,11 @@ function DidLesson() {
                 </Chip>
               ))}
               <Toggle
-                label="显示反事实虚线"
+                label="参考线（按对照涨幅补出的反事实）"
                 checked={showCf}
                 onChange={(v) => {
                   setShowCf(v);
-                  track("画出反事实", "反事实虚线", v ? "显示" : "隐藏");
+                  track("画出反事实", "参考线", v ? "开" : "关");
                 }}
               />
             </div>
@@ -642,9 +644,9 @@ function DidLesson() {
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="你拖的端点" value={cfDrawn ? cfValue : "—"} unit="万元" />
-              <Tile label={`按对照涨幅应在 ${preYear}→${postYear}`} value={showCf ? box.counterfactual : "开虚线看"} unit="万元" tone="rose" />
+              <Tile label={`按对照涨幅应在 ${preYear}→${postYear}`} value={showCf ? box.counterfactual : "开参考线看"} unit="万元" tone="rose" />
               <Tile label="差了多少" value={cfDrawn && showCf ? Math.round((cfValue - box.counterfactual) * 100) / 100 : "—"} unit="万元" tone={cfDrawn && showCf && Math.abs(cfValue - box.counterfactual) > 0.15 ? "rose" : "teal"} />
-              <Tile label="图上竖直距离＝估计" value={showCf ? box.att : "开虚线看"} unit="万元" tone="copper" />
+              <Tile label="图上竖直距离＝估计" value={showCf ? box.att : "开参考线看"} unit="万元" tone="copper" />
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">
               {postYear} 年铜线（实际）与红色虚线（若不通车）之间的垂直距离，就是双重差分估计。反事实的意义正在于此：它是「缺的那一格」，现实中永远观测不到，只能借对照的涨幅补出来。
