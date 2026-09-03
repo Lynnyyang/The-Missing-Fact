@@ -258,7 +258,7 @@ function DidLesson() {
   useEffect(() => {
     setCfDrawn(false);
     setCfDrag(0);
-  }, [picked, preYear, postYear]);
+  }, [picked, postYear]);
 
   const hints: string[] = [];
   if (chosen.length < 2) hints.push("至少选两个对照街区，一个街区的波动会直接进到估计里。");
