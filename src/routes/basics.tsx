@@ -457,13 +457,13 @@ function BasicsLesson() {
                   成绩好的优先
                 </Chip>
                 <Chip
-                  active={naiveMode === "highEffect"}
+                  active={naiveMode === "lowY0"}
                   onClick={() => {
-                    setNaiveMode("highEffect");
-                    track("缺失的一半", "分组方式", "觉得自己进步大的优先");
+                    setNaiveMode("lowY0");
+                    track("缺失的一半", "分组方式", "成绩差的优先");
                   }}
                 >
-                  觉得自己进步大的优先
+                  成绩差的优先
                 </Chip>
               </div>
             }
