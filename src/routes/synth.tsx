@@ -257,6 +257,18 @@ function SynthLesson() {
                     dot={false}
                   />
                 )}
+                {showAllPaths &&
+                  placeboAll.map((r) => (
+                    <Line
+                      key={r.city.key}
+                      type="monotone"
+                      dataKey={`安慰剂·${r.city.name}`}
+                      stroke="var(--muted-foreground)"
+                      strokeOpacity={0.35}
+                      strokeWidth={1}
+                      dot={false}
+                    />
+                  ))}
               </LineChart>
             </ResponsiveContainer>
           </div>
