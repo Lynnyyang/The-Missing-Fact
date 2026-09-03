@@ -245,7 +245,7 @@ function DidLesson() {
   return (
     <LessonShell
       lesson="银线通车"
-      subtitle="双重差分：用对照街区的变化，补出通车街区若不通车的那一格"
+      subtitle="双重差分：用对照街区的变化，减掉通车街区里同期的大势"
       steps={STEPS}
       step={step}
       onStep={setStep}
