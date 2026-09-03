@@ -137,6 +137,8 @@ function SynthLesson() {
   }
 
   const hints: string[] = [];
+  if (!donors.length)
+    hints.push("篮子里一座城市都没有。回到「挑选城市」，亲自挑几座没被同类政策处理过的城市进来。");
   if (badIncluded.length)
     hints.push(`供体里还留着 ${badIncluded.map((c) => c.name).join("、")}，它们自己就被同类政策处理过，必须拿掉。`);
   if (step === 2 && preFit > 3) hints.push(`改气前的拟合误差是 ${fmt(preFit, 2)}，还偏大，试试自动拟合或调高贴合的城市权重。`);
