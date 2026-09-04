@@ -6,7 +6,7 @@
 
 英文名 *The Missing Fact* 即「寻找缺失的事实」。界面为中文。驻场助教叫 **小果**，看着你刚点过的控件给指导。
 
-GitHub 仓库：<https://github.com/Lynnyyang/proactive-assist-bot>  
+GitHub 仓库：<https://github.com/Lynnyyang/The-Missing-Fact>  
 在线演示：<https://proactive-assist-bot.lovable.app>
 
 ---
@@ -55,8 +55,8 @@ TanStack Start、React 19、TypeScript、Tailwind CSS 4、Vite 8、Recharts。
 需要 Node.js 与 npm（也可用 bun）。
 
 ```bash
-git clone https://github.com/Lynnyyang/proactive-assist-bot.git
-cd proactive-assist-bot
+git clone https://github.com/Lynnyyang/The-Missing-Fact.git
+cd The-Missing-Fact
 npm install
 npm run dev
 ```

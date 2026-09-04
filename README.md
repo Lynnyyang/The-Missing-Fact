@@ -6,7 +6,7 @@ Interactive policy-evaluation workbench. The on-screen title is「寻找缺失�
 
 *The Missing Fact* is the English name of that title. The UI is in Chinese. A companion tutor named 小果 (Little Guo) watches what you click and comments.
 
-GitHub repository: <https://github.com/Lynnyyang/proactive-assist-bot>  
+GitHub repository: <https://github.com/Lynnyyang/The-Missing-Fact>  
 Live app: <https://proactive-assist-bot.lovable.app>
 
 ---
@@ -55,8 +55,8 @@ TanStack Start, React 19, TypeScript, Tailwind CSS 4, Vite 8, Recharts.
 Node.js and npm (or bun).
 
 ```bash
-git clone https://github.com/Lynnyyang/proactive-assist-bot.git
-cd proactive-assist-bot
+git clone https://github.com/Lynnyyang/The-Missing-Fact.git
+cd The-Missing-Fact
 npm install
 npm run dev
 ```
