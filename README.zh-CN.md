@@ -94,3 +94,9 @@ src/
 ```
 
 文件路由约定见 `src/routes/README.md`。不要再建 Next.js 风格的 `src/pages/`。
+
+---
+
+## 许可
+
+[MIT](LICENSE)

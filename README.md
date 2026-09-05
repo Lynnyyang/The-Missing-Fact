@@ -94,3 +94,9 @@ src/
 ```
 
 File-based routing: see `src/routes/README.md`. Do not add a Next.js-style `src/pages/`.
+
+---
+
+## License
+
+[MIT](LICENSE)
